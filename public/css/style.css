@@ -1057,3 +1057,19 @@ body {
 .view-order-btn:hover {
     background: #5c4f4f;
 }
+
+.continue-shopping-btn {
+    display: inline-block;
+    background: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-top: 20px;
+    margin-left: 10px;
+    transition: background 0.3s;
+}
+
+.continue-shopping-btn:hover {
+    background: #45a049;
+}

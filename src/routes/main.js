@@ -375,34 +375,49 @@ routes.post("/verifyOrder", async (req, res) => {
     if (razorpay_signature === generated_signature) {
         try {
             const userId = req.session.userId;
-            const cartItems = await CartItem.find({ userId }).populate(
-                "productId",
-            );
-            const customer = await Checkout.findOne({ userId });
+            const cartItems = await CartItem.find({ userId }).populate("productId");
 
-            // Create order
+            if (!cartItems || cartItems.length === 0) {
+                throw new Error("No items found in cart");
+            }
+
+            const customer = await Checkout.findOne({ userId });
+            if (!customer) {
+                throw new Error("Customer information not found");
+            }
+
+            // Calculate total amount
+            const totalAmount = cartItems.reduce(
+                (total, item) => total + (item.productId.price * item.quantity),
+                0
+            );
+
+            // Create order with full details
             const order = new Order({
                 userId,
-                items: cartItems.map((item) => ({
+                items: cartItems.map(item => ({
                     productId: item.productId._id,
                     quantity: item.quantity,
-                    price: item.productId.price,
+                    price: item.productId.price
                 })),
-                totalAmount: cartItems.reduce(
-                    (total, item) =>
-                        total + item.productId.price * item.quantity,
-                    0,
-                ),
+                totalAmount,
                 shippingAddress: `${customer.address}, ${customer.city}, ${customer.state}, ${customer.pinCode}`,
                 status: "processing",
+                orderedAt: new Date()
             });
 
-            await order.save();
-            await CartItem.deleteMany({ userId }); // Clear cart
+            // Save order and clear cart
+            const savedOrder = await order.save();
+            if (!savedOrder) {
+                throw new Error("Failed to save order");
+            }
+
+            await CartItem.deleteMany({ userId });
 
             res.json({
                 success: true,
                 message: "Payment has been verified and order created",
+                orderId: savedOrder._id,
                 redirectUrl: '/success'
             });
         } catch (error) {
@@ -410,6 +425,7 @@ routes.post("/verifyOrder", async (req, res) => {
             res.status(500).json({
                 success: false,
                 message: "Error creating order",
+                errorDetails: error.message //add more details for debugging
             });
         }
     } else {
@@ -419,6 +435,19 @@ routes.post("/verifyOrder", async (req, res) => {
 
 module.exports = routes;
 // Success page route
-routes.get('/success', isAuthenticated, (req, res) => {
-    res.render('success');
+routes.get('/success', isAuthenticated, async (req, res) => {
+    try {
+        const orderId = req.query.orderId;
+        if (!orderId){
+            return res.render('success', {error: 'Order not found'});
+        }
+        const order = await Order.findById(orderId).populate('items.productId');
+        if (!order) {
+            return res.render('success', {error: 'Order not found'});
+        }
+        res.render('success', { order });
+    } catch (error) {
+        console.error('Error rendering success page: ', error);
+        res.status(500).send('Error rendering success page')
+    }
 });
