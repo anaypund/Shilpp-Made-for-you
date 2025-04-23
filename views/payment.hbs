@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - SHiLPP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Header with Search & Icons -->
+    <header class="header">
+        <a href="/"><h1>SHiLPP</h1></a>
+        <div class="header-icons">
+            <a href="/#productContainer"><i class="fas fa-home"></i></a>
+        </div>
+    </header>
+
+    <main>
+        <div class="tabs" style="justify-content: center; display: flex;">
+        <h1>Checkout</h1>
+        </div>
+        
+        <!-- Cart Items -->
+        <div class="cart-items">
+            {{#each cartItems}}
+            <div class="cart-item">
+                <img src="{{this.productId.imagePath}}" alt="{{this.productId.productName}}">
+                <div class="cart-item-details">
+                    <h3>{{this.productId.productName}}</h3>
+                    <p>Price: ₹{{this.productId.price}}</p>
+                    <p>Quantity: {{this.quantity}}</p>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+
+        <!-- Total Section -->
+        <div class="total-section">
+            <h2>Order Summary</h2>
+    <div class="total-breakdown">
+        <span>Subtotal</span>
+        <span>₹{{subTotal}}</span>
+    </div>
+    {{!-- <div class="total-breakdown">
+        <span>Tax (10%)</span>
+        <span>₹{{tax}}</span>
+    </div> --}}
+    <div class="total-breakdown">
+        <span>Shipping</span>
+        <span>₹{{shippingCharges}}</span>
+    </div>
+    <div class="total-breakdown">
+        <span>Total</span>
+        <span class="total-price">₹{{total}}</span>
+    </div>
+    {{!-- <button class="checkout-btn">Proceed to Checkout</button> --}}
+        </div>
+
+        <!-- Payment Form -->
+        <div  class="checkout-form">
+            <h2>Payment Options</h2>
+            <div class="form-group">
+                <input type="hidden" name="userId" value="{{userId}}" id="userId">
+                <input type="hidden" name="name" value="{{name}}" id="name">
+                <input type="hidden" name="email" value="{{email}}" id="email">
+                <input type="hidden" name="contact" value="{{contact}}" id="contact">
+                <input type="hidden" name="total" value="{{total}}">
+                <label for="paymentMethod">Payment Method</label>
+                <select id="paymentMethod" name="paymentMethod" required>
+                    <option value="creditCard">Credit Card</option>
+                    <option value="debitCard">Debit Card</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="netBanking">Net Banking</option>
+                </select>
+            </div>
+
+            <button type="submit" id="pay-btn" class="pay-now-btn">Pay Now</button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 SHiLPP. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
+
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+
+   document.getElementById('pay-btn').onclick = async function () {
+      const response = await fetch('/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ amount: 1000, currency: 'INR', receipt: 'receipt#1', userId: document.getElementById('userId').value})
+      });
+      const order = await response.json();
+      console.log(order);
+
+      const options = {
+        key: 'rzp_test_TMlzfWIiuTjqpN', // Enter the Key ID generated from the Dashboard
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Shilpp',
+        description: 'Test Transaction',
+        order_id: order.id,
+        handler: function (response) {
+          alert('Payment successful: ' + response.razorpay_payment_id);
+        },
+        prefill: {
+          name: document.getElementById('name').value,
+          email: document.getElementById('email').value,
+          contact: document.getElementById('contact').value
+        }
+      };
+
+      const rzp1 = new Razorpay(options);
+      rzp1.open();
+    }
+</script>

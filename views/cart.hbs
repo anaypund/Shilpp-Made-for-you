@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Cart - Shilpp</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+        <a href="/"><h1>SHiLPP</h1></a>
+        <div class="header-icons">
+            <a href="/#productContainer"><i class="fas fa-home"></i></a>
+        </div>
+    </header>
+
+  <!-- Main Cart Section -->
+  <div class="tabs" style="justify-content: center; display: flex;">
+  <h1>Your Cart</h1>
+  </div>
+  <div class="cart-container">
+    <ul>
+      {{#each cartItems}}
+        <li class="cart-item">
+          <img src="{{this.productId.imagePath}}" alt="{{this.productId.productName}}">
+          <div class="cart-item-details">
+            <h3>{{this.productId.productName}}</h3>
+            <p>Price: ₹{{this.productId.price}}</p>
+            <p>Quantity: {{this.quantity}}</p>
+          </div>
+          <form action="/cart/update" method="POST" class="update-form">
+            <input type="hidden" name="productId" value="{{this.productId._id}}">
+            <input type="number" name="quantity" value="{{this.quantity}}" min="0">
+            <button type="submit">Update</button>
+          </form>
+        </li>
+      {{/each}}
+    </ul>
+  </div>
+
+    <div class="total-section">
+    <form action="/checkout/shipping-info" method="GET">
+        <input type="hidden" name="UserID" value="1">
+    <h2>Subtotal</h2>
+    <div class="total-breakdown">
+        <span>Subtotal</span>
+        <span>₹{{total}}</span>
+    </div>
+    <button type="submit" class="add-to-cart">Proceed to Checkout</button>
+    </form>
+</div>
+
+  <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-section">Contact Us: <br> 123 Handmade St, Artsy City</div>
+        <div class="footer-section">Email: hello@shilp.com</div>
+        <div class="footer-section">Follow Us: <i class="fab fa-facebook"></i> <i class="fab fa-instagram"></i> <i
+                class="fab fa-twitter"></i></div>
+    </footer>
+
+</body>
+</html>

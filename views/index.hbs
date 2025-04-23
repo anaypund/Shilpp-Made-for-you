@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHiLP - Handmade Creations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Caveat:wght@700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+
+    <!-- Header with Search & Icons -->
+    <header class="header">
+        <a href="/index.html"><h1>SHiLPP</h1></a>
+        <div class="header-icons">
+            <i class="fas fa-bell"></i>
+            <i class="fas fa-search" onclick="toggleSearchBox()"></i>
+        </div>
+    </header>
+
+    <!-- Banner
+    <section class="banner">
+        <h2>Discover Beautiful Handmade Creations</h2>
+    </section> -->
+
+    <section class="banner-carousel">
+        <div class="carousel-slide active" style="background-image: url('./static/images/Resin\ Earrings\ \(Pack\ of\ 2\).png');">
+            <div class="overlay"></div>
+            <h2>Unique Finds, Made by Hand</h2>
+        </div>
+        <div class="carousel-slide" style="background-image: url('./static/images/Rose\ Agate\ Timepiece\ Resin\ Wall\ Clock.png');">
+            <div class="overlay"></div>
+            <h2>Discover Beautiful Handmade Creations</h2>
+        </div>
+        <div class="carousel-slide" style="background-image: url('./static/images/Resin\ Earring.png');">
+            <div class="overlay"></div>
+            <h2>Treasures Crafted Just for You</h2>
+        </div>
+        <div class="carousel-slide" style="background-image: url('./static/images/Sun\ Moon\ Scented\ Candles.png');">
+            <div class="overlay"></div>
+            <h2>Crafted with Heart, Inspired by You</h2>
+        </div>
+        <div class="carousel-slide" style="background-image: url('./static/images/Resin\ Candle\ Holder.png');">
+            <div class="overlay"></div>
+            <h2>Made with Passion, Loved by All</h2>
+        </div>
+    </section>
+    
+    
+
+    <!-- Search Box -->
+    <div id="searchBox">
+        <input type="text" id="searchInput" placeholder="Search products...">
+        <a href="#productContainer"><i class="fas fa-search" onclick="searchProducts()"></i></a>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <span class="tab active" onclick="filterCategory('All')">All</span>
+        <span class="tab" onclick="filterCategory('Mens')">Mens</span>
+        <span class="tab" onclick="filterCategory('Womens')">Womens</span>
+        <span class="tab" onclick="filterCategory('Accessories')">Accessories</span>
+    </div>
+
+    <!-- Carousel -->
+    <!-- <div class="carousel">
+        <img src="static/images\Product.jpeg" alt="Carousel Image 1">
+        <img src="static/images\Product.jpeg" alt="Carousel Image 2">
+        <img src="static/images\Product.jpeg" alt="Carousel Image 3">
+    </div> -->
+
+    <!-- Products Section -->
+    <section class="products" id="productContainer"></section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-section">Contact Us: <br> 123 Handmade St, Artsy City</div>
+        <div class="footer-section">Email: hello@shilp.com</div>
+        <div class="footer-section">Follow Us: <i class="fab fa-facebook"></i> <i class="fab fa-instagram"></i> <i
+                class="fab fa-twitter"></i></div>
+    </footer>
+
+    <!-- Cart Icon -->
+    <div class="cart-icon">
+        <a href="/cart" style="text-decoration: none; color: white;"><i class="fas fa-shopping-cart"></i></a>
+    </div>
+
+    <script>
+        let searchBoxVisible = false;
+        const products = [
+        {{#each Product}}
+            { title: "{{this.productName}}", _id: "{{this._id}}", image:"{{this.imagePath}}", category: "Mens", price: "1500", actualPrice: "{{this.price}}", keywords: "{{this.keyWords}}" },
+        {{/each}}
+        ];
+
+        function toggleSearchBox() {
+            searchBoxVisible = !searchBoxVisible;
+            document.getElementById('searchBox').style.display = searchBoxVisible ? 'block' : 'none';
+        }
+
+        function populateProducts(filter = 'All') {
+            const container = document.getElementById('productContainer');
+            container.innerHTML = '';
+
+            products.forEach(product => {
+                if (filter === 'All' || product.category === filter || product.keywords.includes(filter.toLowerCase())) {
+                    const productCard = `
+                        <form action="/product-details" method="GET" class="product-card">
+                            <input type="hidden" name="id" value="${product._id}">
+                            <button type="submit" style="all: unset; cursor: pointer; width: 100%;">
+                                <img src="${product.image}" alt="${product.title}">
+                                <h3>${product.title}</h3>
+                                <p class="price"><span class="discounted-price">&#8377;${product.actualPrice}</span> <text>${product.price}</text></p>
+                            </button>
+                        </form>`;
+                    container.insertAdjacentHTML('beforeend', productCard);
+                }
+            });
+        }
+
+
+        function filterCategory(category) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`.tab[onclick="filterCategory('${category}')"]`).classList.add('active');
+            populateProducts(category);
+        }
+
+        function searchProducts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            populateProducts();
+            products.forEach(product => {
+                const isMatch = product.keywords.some(keyword => keyword.includes(query));
+                document.querySelector(`[alt="${product.title}"]`).parentElement.style.display = isMatch ? 'block' : 'none';
+            });
+        }
+
+        populateProducts(); // Initial load of products
+
+
+        const slides = document.querySelectorAll('.carousel-slide');
+        let currentSlide = 0;
+
+
+        function changeSlide(direction) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + direction + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }
+
+        // Optional: Auto-slide every 5 seconds
+        setInterval(() => changeSlide(1), 2000);
+
+    </script>
+</body>
+
+</html>

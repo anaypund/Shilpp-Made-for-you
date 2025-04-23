@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shilpp</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Caveat:wght@700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Header with Search & Icons -->
+    <header class="header">
+        <a href="/"><h1>SHiLPP</h1></a>
+        <div class="header-icons">
+            <a href="/#productContainer"><i class="fas fa-home"></i></a>
+        </div>
+    </header>
+    {{#each product}}
+    <div class="container">
+    <div class="product-container">
+        <!-- Carousel Section -->
+        <div class="carousel-container">
+            <img src="{{this.imagePath}}" class="carousel-image active" alt="Product Image 1">
+            <img src="{{this.imagePath}}" class="carousel-image" alt="Product Image 2">
+            <img src="{{this.imagePath}}" class="carousel-image" alt="Product Image 3">
+            <div class="carousel-controls">
+                <!-- <i class="fas fa-chevron-left" id="prevBtn"></i>
+                <i class="fas fa-chevron-right" id="nextBtn"></i> -->
+            </div>
+            
+        </div>
+
+        <!-- Product Details Section -->
+        <div class="product-details">
+            <h1>{{this.productName}}</h1>
+            <!-- <div class="review-stars">
+                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+            </div> -->
+            Get it now at just
+            <div class="price">
+                <span class="discounted-price">&#8377;{{this.price}}</span> <text>1500</text>
+            </div>
+            <form action="/cart" method="POST">
+            <input type="hidden" name="id" value="{{this._id}}">
+            <button class="add-to-cart" onclick="openPopup()" type="submit">Add to Cart</button>
+            </form>
+
+            <div class="description">
+                {{this.description}}
+            </div>
+            <div class="product-specs">
+                <h2>Product Specifications</h2>
+                <ul>
+                    {{#each keyPoints}}
+                    <li>{{@this}}</li>
+                    {{/each}}
+                    <li>{{this.sellerName}}</li>
+                </ul>
+            </div>
+            <button id="share-btn" class="add-to-cart" style="margin-top: 20px;">Share</button>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Icon -->
+    <div class="cart-icon">
+        <a href="/cart" style="text-decoration: none; color: white;"><i class="fas fa-shopping-cart"></i></a>
+    </div>
+    
+
+<div id="popupContainer" class="popup-container">
+    <div class="popup-content">
+        <span class="close-btn" onclick="closePopup()">&#10005;</span>
+        <iframe src="https://forms.gle/9RSPhuirxbmRhmfD9" width="100%" height="500px" style="border: none;"></iframe>
+    </div>
+</div>
+    {{/each}}
+<script>
+    function openPopup() {
+        document.getElementById("popupContainer").style.display = "flex";
+    }
+    
+    function closePopup() {
+        document.getElementById("popupContainer").style.display = "none";
+    }
+    
+    window.onclick = function(event) {
+        const popup = document.getElementById("popupContainer");
+        if (event.target === popup) {
+            popup.style.display = "none";
+        }
+    }
+
+    document.getElementById('share-btn').addEventListener('click', async () => {
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: document.title,
+                url: window.location.href
+            });
+            console.log('Page shared successfully');
+        } catch (error) {
+            console.error('Error sharing:', error);
+        }
+    } else {
+        alert("Sharing not supported on this browser.");
+    }
+});
+
+
+    const images = document.querySelectorAll('.carousel-image');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    let currentIndex = 0;
+
+    function showImage(index) {
+        images.forEach((img, i) => {
+            img.classList.toggle('active', i === index);
+        });
+    }
+
+    prevBtn.addEventListener('click', () => {
+        currentIndex = (currentIndex - 1 + images.length) % images.length;
+        showImage(currentIndex);
+    });
+
+    nextBtn.addEventListener('click', () => {
+        currentIndex = (currentIndex + 1) % images.length;
+        showImage(currentIndex);
+    });
+
+    // Auto-slide every 5 seconds
+    setInterval(() => {
+        currentIndex = (currentIndex + 1) % images.length;
+        showImage(currentIndex);
+    }, 5000);
+</script>
+
+</body>
+</html>
