@@ -130,20 +130,28 @@
         order_id: order.id,
         handler: function (response) {
           // Handle successful payment
-          fetch('/verify-payment', {
+          fetch('/verifyOrder', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'x-razorpay-signature': response.razorpay_signature
             },
-            body: JSON.stringify({ razorpay_payment_id: response.razorpay_payment_id, order_id: order.id })
+            body: JSON.stringify({ 
+              payment_id: response.razorpay_payment_id, 
+              order_id: order.id 
+            })
           })
           .then(res => res.json())
           .then(data => {
             if (data.success) {
-              window.location.href = '/success'; // Redirect to success page
+              window.location.href = `/success?orderId=${data.orderId}`; // Redirect to success page with order ID
             } else {
-              alert('Payment verification failed.');
+              alert('Payment verification failed: ' + data.message);
             }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred during payment verification');
           });
         },
         prefill: {
