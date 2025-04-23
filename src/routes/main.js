@@ -5,7 +5,73 @@ const Path = require('path');
 const { urlencoded } = require('body-parser');
 const bodyParser = require('body-parser');
 const { Console, log } = require('console');
-require('dotenv').config()
+const session = require('express-session');
+require('dotenv').config();
+
+const User = require('../models/User');
+
+routes.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false
+}));
+
+// Authentication middleware
+const isAuthenticated = (req, res, next) => {
+    if (req.session.userId) {
+        next();
+    } else {
+        res.redirect('/login');
+    }
+};
+
+routes.get('/login', (req, res) => {
+    res.render('login');
+});
+
+routes.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+        
+        if (!user || !(await user.comparePassword(password))) {
+            return res.render('login', { error: 'Invalid email or password' });
+        }
+
+        req.session.userId = user._id;
+        res.redirect('/');
+    } catch (error) {
+        res.render('login', { error: 'An error occurred' });
+    }
+});
+
+routes.get('/signup', (req, res) => {
+    res.render('signup');
+});
+
+routes.post('/signup', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+        const existingUser = await User.findOne({ email });
+        
+        if (existingUser) {
+            return res.render('signup', { error: 'Email already exists' });
+        }
+
+        const user = new User({ name, email, password });
+        await user.save();
+        
+        req.session.userId = user._id;
+        res.redirect('/');
+    } catch (error) {
+        res.render('signup', { error: 'An error occurred' });
+    }
+});
+
+routes.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/');
+});
 const Razorpay = require('razorpay'); 
 const { RAZORPAY_ID_KEY, RAZORPAY_SECRET_KEY } = process.env;
 
@@ -74,7 +140,7 @@ routes.get("/product-details", async (req, res) => {
     }
 })
 
-routes.post("/cart", async (req, res) => {
+routes.post("/cart", isAuthenticated, async (req, res) => {
     const productId = req.body.id
     const userId = 1
     try {
