@@ -7,8 +7,10 @@ const bodyParser = require('body-parser');
 const { Console, log } = require('console');
 const session = require('express-session');
 require('dotenv').config();
+const crypto = require('crypto'); // Added for HMAC
 
 const User = require('../models/User');
+const Order = require('../models/Order'); // Added Order model
 
 routes.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -301,25 +303,44 @@ routes.post('/create-order', async (req, res) => {
     }
   });
 
-routes.post('/verifyOrder',  (req, res)=>{ 
-
+routes.post('/verifyOrder', async (req, res) => { 
     const {order_id, payment_id} = req.body;     
-    const razorpay_signature =  req.headers['x-razorpay-signature'];
-
+    const razorpay_signature = req.headers['x-razorpay-signature'];
     const key_secret = process.env.RAZORPAY_SECRET_KEY;     
-
     let hmac = crypto.createHmac('sha256', key_secret); 
-
     hmac.update(order_id + "|" + payment_id);
-
     const generated_signature = hmac.digest('hex');
 
+    if(razorpay_signature === generated_signature) {
+        try {
+            const userId = req.session.userId;
+            const cartItems = await CartItem.find({ userId }).populate('productId');
+            const customer = await Checkout.findOne({ userId });
 
-    if(razorpay_signature===generated_signature){
-        res.json({success:true, message:"Payment has been verified"})
+            // Create order
+            const order = new Order({
+                userId,
+                items: cartItems.map(item => ({
+                    productId: item.productId._id,
+                    quantity: item.quantity,
+                    price: item.productId.price
+                })),
+                totalAmount: cartItems.reduce((total, item) => total + (item.productId.price * item.quantity), 0),
+                shippingAddress: `${customer.address}, ${customer.city}, ${customer.state}, ${customer.pinCode}`,
+                status: 'processing'
+            });
+
+            await order.save();
+            await CartItem.deleteMany({ userId }); // Clear cart
+
+            res.json({success: true, message: "Payment has been verified and order created"});
+        } catch (error) {
+            console.error('Error creating order:', error);
+            res.status(500).json({success: false, message: "Error creating order"});
+        }
+    } else {
+        res.json({success: false, message: "Payment verification failed"});
     }
-    else
-    res.json({success:false, message:"Payment verification failed"})
 });
 
 module.exports = routes;

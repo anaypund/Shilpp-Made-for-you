@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - SHiLPP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <a href="/"><h1>SHiLPP</h1></a>
+        <div class="header-icons">
+            <a href="/#productContainer"><i class="fas fa-home"></i></a>
+            <a href="/cart"><i class="fas fa-shopping-cart"></i></a>
+        </div>
+    </header>
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <h2>My Profile</h2>
+            <div class="user-info">
+                <p><strong>Name:</strong> {{user.name}}</p>
+                <p><strong>Email:</strong> {{user.email}}</p>
+            </div>
+        </div>
+
+        <div class="orders-section">
+            <h3>My Orders</h3>
+            {{#if orders.length}}
+                {{#each orders}}
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">Order #{{this._id}}</span>
+                        <span class="order-date">{{this.orderedAt}}</span>
+                        <span class="order-status {{this.status}}">{{this.status}}</span>
+                    </div>
+                    <div class="order-items">
+                        {{#each this.items}}
+                        <div class="order-item">
+                            <span>{{this.productId.productName}}</span>
+                            <span>Qty: {{this.quantity}}</span>
+                            <span>₹{{this.price}}</span>
+                        </div>
+                        {{/each}}
+                    </div>
+                    <div class="order-footer">
+                        <span class="order-total">Total: ₹{{this.totalAmount}}</span>
+                        <span class="shipping-address">Shipping to: {{this.shippingAddress}}</span>
+                    </div>
+                </div>
+                {{/each}}
+            {{else}}
+                <p class="no-orders">No orders yet!</p>
+            {{/if}}
+        </div>
+    </div>
+</body>
+</html>
