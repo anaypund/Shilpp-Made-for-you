@@ -1017,3 +1017,43 @@ body {
     font-size: 0.9em;
     text-align: center;
 }
+.success-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.success-message {
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.success-message i {
+    font-size: 4rem;
+    color: #4CAF50;
+    margin-bottom: 20px;
+}
+
+.success-message h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.view-order-btn {
+    display: inline-block;
+    background: #3a2e2e;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-top: 20px;
+    transition: background 0.3s;
+}
+
+.view-order-btn:hover {
+    background: #5c4f4f;
+}

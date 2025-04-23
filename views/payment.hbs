@@ -7,6 +7,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .success-page {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .success-page h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .success-page button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <!-- Header with Search & Icons -->
@@ -21,7 +39,7 @@
         <div class="tabs" style="justify-content: center; display: flex;">
         <h1>Checkout</h1>
         </div>
-        
+
         <!-- Cart Items -->
         <div class="cart-items">
             {{#each cartItems}}
@@ -111,7 +129,22 @@
         description: 'Test Transaction',
         order_id: order.id,
         handler: function (response) {
-          alert('Payment successful: ' + response.razorpay_payment_id);
+          // Handle successful payment
+          fetch('/verify-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ razorpay_payment_id: response.razorpay_payment_id, order_id: order.id })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              window.location.href = '/success'; // Redirect to success page
+            } else {
+              alert('Payment verification failed.');
+            }
+          });
         },
         prefill: {
           name: document.getElementById('name').value,

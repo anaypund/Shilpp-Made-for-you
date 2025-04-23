@@ -403,6 +403,7 @@ routes.post("/verifyOrder", async (req, res) => {
             res.json({
                 success: true,
                 message: "Payment has been verified and order created",
+                redirectUrl: '/success'
             });
         } catch (error) {
             console.error("Error creating order:", error);
@@ -417,3 +418,7 @@ routes.post("/verifyOrder", async (req, res) => {
 });
 
 module.exports = routes;
+// Success page route
+routes.get('/success', isAuthenticated, (req, res) => {
+    res.render('success');
+});
