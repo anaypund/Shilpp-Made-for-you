@@ -195,17 +195,17 @@ routes.get('/cart', isAuthenticated, async (req, res) => {
   })
 
 routes.get("/checkout/payment", async (req, res) => {
-    userId = req.query.UserID
+    const userId = req.session.userId; // Use session userId instead of query parameter
     try {
         const cartItems = await CartItem.find({ userId: userId }).populate('productId');
-        let shippingCharges = 100
+        let shippingCharges = 100;
         let subTotal = 0;
           cartItems.forEach(item => {
               subTotal += item.productId.price * item.quantity;
           });
-        const costumer = await Checkout.findOne({ userId: userId })
-        if(costumer.state == "Maharashtra" && costumer.city == "Amravati"){
-            shippingCharges = 0
+        const costumer = await Checkout.findOne({ userId: userId });
+        if(costumer && costumer.state == "Maharashtra" && costumer.city == "Amravati"){
+            shippingCharges = 0;
         }
         total = subTotal + shippingCharges
           res.render('payment', {
@@ -225,13 +225,13 @@ routes.get("/checkout/payment", async (req, res) => {
       }
 })
 
-routes.get('/checkout/shipping-info', async (req, res) => {
-    userId = req.query.UserID
+routes.get('/checkout/shipping-info', isAuthenticated, async (req, res) => {
+    const userId = req.session.userId;
     res.render('shippingInfo', {
         userId: userId,
-        user: req.session.userId ? await User.findById(req.session.userId) : null
-    })
-})
+        user: await User.findById(userId)
+    });
+});
 
 routes.post('/checkout/shipping-info', async (req, res) => {
     const {userId, name, phoneNumber, email, state, country, city, address, pincode} = req.body
