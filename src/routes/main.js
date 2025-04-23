@@ -109,8 +109,8 @@ routes.get("/product-details", async (req, res) => {
 })
 
 routes.post("/cart", isAuthenticated, async (req, res) => {
-    const productId = req.body.id
-    const userId = 1
+    const productId = req.body.id;
+    const userId = req.session.userId;
     try {
         let cartItem = await CartItem.findOne({ userId: userId, productId: productId });
 
@@ -125,9 +125,8 @@ routes.post("/cart", isAuthenticated, async (req, res) => {
           });
           await cartItem.save();
         }
-        console.log("Added to cart")
-        res.redirect('/cart'); 
-        res.status(200);
+        console.log("Added to cart");
+        res.redirect('/cart');
       } catch (error) {
         console.error(error);
         res.status(500).send("Error adding to cart");
@@ -155,9 +154,9 @@ routes.get('/cart', isAuthenticated, async (req, res) => {
     }
   });
 
-  routes.post("/cart/update", async (req, res) => {
+  routes.post("/cart/update", isAuthenticated, async (req, res) => {
     const { productId, quantity } = req.body;
-    const userId = 1
+    const userId = req.session.userId;
     try {
         if (quantity <= 0) {
         await CartItem.deleteOne({ userId: userId, productId: productId });
