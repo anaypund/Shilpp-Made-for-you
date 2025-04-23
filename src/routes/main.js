@@ -134,8 +134,8 @@ routes.post("/cart", isAuthenticated, async (req, res) => {
       }
 })
 
-routes.get('/cart', async (req, res) => {
-    const userId = 1; 
+routes.get('/cart', isAuthenticated, async (req, res) => {
+    const userId = req.session.userId; 
 
     try {
       const cartItems = await CartItem.find({ userId: userId }).populate('productId');
