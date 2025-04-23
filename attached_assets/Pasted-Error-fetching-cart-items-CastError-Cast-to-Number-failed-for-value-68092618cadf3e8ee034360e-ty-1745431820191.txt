@@ -1,0 +1,38 @@
+Error fetching cart items: CastError: Cast to Number failed for value "68092618cadf3e8ee034360e" (type string) at path "userId" for model "CartItem"
+    at SchemaNumber.cast (/home/runner/workspace/node_modules/mongoose/lib/schema/number.js:380:11)
+    at SchemaType.applySetters (/home/runner/workspace/node_modules/mongoose/lib/schemaType.js:1236:12)
+    at SchemaNumber.castForQuery (/home/runner/workspace/node_modules/mongoose/lib/schema/number.js:434:16)
+    at cast (/home/runner/workspace/node_modules/mongoose/lib/cast.js:389:32)
+    at Query.cast (/home/runner/workspace/node_modules/mongoose/lib/query.js:4868:12)
+    at Query._castConditions (/home/runner/workspace/node_modules/mongoose/lib/query.js:2265:10)
+    at model.Query._find (/home/runner/workspace/node_modules/mongoose/lib/query.js:2292:8)
+    at model.Query.exec (/home/runner/workspace/node_modules/mongoose/lib/query.js:4412:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async /home/runner/workspace/src/routes/main.js:141:25 {
+  stringValue: '"68092618cadf3e8ee034360e"',
+  messageFormat: undefined,
+  kind: 'Number',
+  value: '68092618cadf3e8ee034360e',
+  path: 'userId',
+  reason: AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(!isNaN(val))
+  
+      at castNumber (/home/runner/workspace/node_modules/mongoose/lib/cast/number.js:27:10)
+      at SchemaNumber.cast (/home/runner/workspace/node_modules/mongoose/lib/schema/number.js:378:12)
+      at SchemaType.applySetters (/home/runner/workspace/node_modules/mongoose/lib/schemaType.js:1236:12)
+      at SchemaNumber.castForQuery (/home/runner/workspace/node_modules/mongoose/lib/schema/number.js:434:16)
+      at cast (/home/runner/workspace/node_modules/mongoose/lib/cast.js:389:32)
+      at Query.cast (/home/runner/workspace/node_modules/mongoose/lib/query.js:4868:12)
+      at Query._castConditions (/home/runner/workspace/node_modules/mongoose/lib/query.js:2265:10)
+      at model.Query._find (/home/runner/workspace/node_modules/mongoose/lib/query.js:2292:8)
+      at model.Query.exec (/home/runner/workspace/node_modules/mongoose/lib/query.js:4412:80)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '=='
+  },
+  valueType: 'string'
+}
