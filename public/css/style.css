@@ -135,9 +135,30 @@ body {
     transition: 0.3s ease;
 }
 
-.header-icons a{
+.header-icons a {
     text-decoration: none;
     color: #333;
+}
+
+.auth-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+    padding: 5px 10px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.auth-link:hover {
+    background: #fce4ec;
+}
+
+.user-greeting {
+    font-family: 'Caveat', cursive;
+    color: #e75480;
+    font-size: 1.2em;
+    margin-right: 10px;
 }
 
 /* Horizontal Tabs */

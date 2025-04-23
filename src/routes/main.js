@@ -33,7 +33,7 @@ routes.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
-        
+
         if (!user || !(await user.comparePassword(password))) {
             return res.render('login', { error: 'Invalid email or password' });
         }
@@ -53,14 +53,14 @@ routes.post('/signup', async (req, res) => {
     try {
         const { name, email, password } = req.body;
         const existingUser = await User.findOne({ email });
-        
+
         if (existingUser) {
             return res.render('signup', { error: 'Email already exists' });
         }
 
         const user = new User({ name, email, password });
         await user.save();
-        
+
         req.session.userId = user._id;
         res.redirect('/');
     } catch (error) {
@@ -90,40 +90,9 @@ routes.use(bodyParser.json());
 routes.use("/static",express.static("public"))
 
 routes.get("/", async(req,res)=>{
-    // Products.create([
-    //     {
-    //         productName: "Rose Agate Timepiece Resin Wall Clock",
-    //         price: 1320,
-    //         imagePath: "/static/images/Rose Agate Timepiece Resin Wall Clock.png",
-    //         sellerName: "RT Dazzle Art",
-    //         sellerID: "seller01",
-    //         description: "Make a statement with our vibrant and colorful handmade resin wall clocks! Perfect for adding a pop of color to any room, or as a thoughtful gift for friends and family.",
-    //         keyPoints: [
-    //             "Handcrafted with care",
-    //             "Material: Resin",
-    //             "Size: 12 x 12 Inches",
-    //             "Eco-friendly and sustainable"
-    //         ],
-    //         keyWords: ["clock", "resin", "wall clock", "beautiful"],
-    //     },
-    //     {
-    //         productName: "Resin earring",
-    //         price: 1320,
-    //         imagePath: "/static/images/Resin earring.png",
-    //         sellerName: "RT Dazzle Art",
-    //         sellerID: "seller01",
-    //         description: "Make a statement with our vibrant and colorful handmade resin wall clocks! Perfect for adding a pop of color to any room, or as a thoughtful gift for friends and family.",
-    //         keyPoints: [
-    //             "Handcrafted with care",
-    //             "Material: Resin",
-    //             "Size: 12 x 12 Inches",
-    //             "Eco-friendly and sustainable"
-    //         ],
-    //         keyWords: ["clock", "resin", "wall clock", "beautiful"],
-    //     },
-    // ])
     res.status(200).render("index",{
-        Product : await Products.find()
+        Product : await Products.find(),
+        user: req.session.userId ? await User.findById(req.session.userId) : null
     });
 })
 
@@ -131,10 +100,9 @@ routes.get("/product-details", async (req, res) => {
     const productId = req.query.id;
     try {
         const productArray = await Products.find({ _id: productId });
-        const product = productArray[0]; // Access the first product document from the array
+        const product = productArray[0]; 
         const keyPoints = product.keyPoints;
-
-        res.render('product-details', { product : productArray, keyPoints : keyPoints}); // Render a template for the product page
+        res.render('product-details', { product : productArray, keyPoints : keyPoints, user: req.session.userId ? await User.findById(req.session.userId) : null}); 
     } catch (error) {
         res.status(500).send('Product not found');
     }
@@ -144,15 +112,12 @@ routes.post("/cart", isAuthenticated, async (req, res) => {
     const productId = req.body.id
     const userId = 1
     try {
-        // Check if item already exists in the cart for this user
         let cartItem = await CartItem.findOne({ userId: userId, productId: productId });
-        
+
         if (cartItem) {
-          // If item is already in the cart, increment the quantity
           cartItem.quantity += 1;
           await cartItem.save();
         } else {
-          // Otherwise, create a new cart item
           cartItem = new CartItem({
             userId: userId,
             productId: productId,
@@ -161,7 +126,7 @@ routes.post("/cart", isAuthenticated, async (req, res) => {
           await cartItem.save();
         }
         console.log("Added to cart")
-        res.redirect('/cart'); // Redirect to the cart page
+        res.redirect('/cart'); 
         res.status(200);
       } catch (error) {
         console.error(error);
@@ -169,13 +134,10 @@ routes.post("/cart", isAuthenticated, async (req, res) => {
       }
 })
 
-// routes/cart.js
 routes.get('/cart', async (req, res) => {
-    // const userId = req.session.userId; // Get the logged-in user's ID
-    const userId = 1; // Get the logged-in user's ID
-  
+    const userId = 1; 
+
     try {
-      // Populate cart items with product details
       const cartItems = await CartItem.find({ userId: userId }).populate('productId');
       let total = 0;
         cartItems.forEach(item => {
@@ -185,6 +147,7 @@ routes.get('/cart', async (req, res) => {
         res.render('cart', {
             cartItems: cartItems,
             total: total,
+            user: req.session.userId ? await User.findById(req.session.userId) : null
         });
     } catch (error) {
         console.error('Error fetching cart items:', error);
@@ -197,10 +160,8 @@ routes.get('/cart', async (req, res) => {
     const userId = 1
     try {
         if (quantity <= 0) {
-        // Remove the item if quantity is 0
         await CartItem.deleteOne({ userId: userId, productId: productId });
         } else {
-        // Otherwise, update the quantity
         await CartItem.findOneAndUpdate({ userId: userId, productId: productId }, { quantity });
         }
         res.redirect('/cart');
@@ -209,11 +170,10 @@ routes.get('/cart', async (req, res) => {
         res.status(500).send("Error updating cart");
     }
   })
-  
+
 routes.get("/checkout/payment", async (req, res) => {
     userId = req.query.UserID
     try {
-        // Populate cart items with product details
         const cartItems = await CartItem.find({ userId: userId }).populate('productId');
         let shippingCharges = 100
         let subTotal = 0;
@@ -233,7 +193,8 @@ routes.get("/checkout/payment", async (req, res) => {
               total: total,
               name: costumer.name,
               email: costumer.email,
-              contact: costumer.phoneNumber
+              contact: costumer.phoneNumber,
+              user: req.session.userId ? await User.findById(req.session.userId) : null
           });
       } catch (error) {
           console.error('Error fetching cart items:', error);
@@ -244,7 +205,8 @@ routes.get("/checkout/payment", async (req, res) => {
 routes.get('/checkout/shipping-info', async (req, res) => {
     userId = req.query.UserID
     res.render('shippingInfo', {
-        userId: userId
+        userId: userId,
+        user: req.session.userId ? await User.findById(req.session.userId) : null
     })
 })
 
@@ -275,7 +237,7 @@ routes.post('/checkout/shipping-info', async (req, res) => {
     }
     else{
         try {
-            const result = await Customer.updateOne(
+            const result = await Checkout.updateOne(
                 { userId: userId },
                 { 
                     $set: {
@@ -292,7 +254,7 @@ routes.post('/checkout/shipping-info', async (req, res) => {
                     }
                 }
             );
-        
+
             if (result.matchedCount > 0) {
                 console.log('Customer information updated successfully.');
             } else {
@@ -302,7 +264,7 @@ routes.post('/checkout/shipping-info', async (req, res) => {
         } catch (error) {
             console.error('Error updating customer information:', error);
         }
-        
+
     }
 })
 
@@ -320,15 +282,15 @@ routes.post('/create-order', async (req, res) => {
             shippingCharges = 0
         }
         total = subTotal + shippingCharges
-  
+
     try {
       const order = await razorpay.orders.create({
-        amount: total * 100, // amount in the smallest currency unit
+        amount: total * 100, 
         currency,
         receipt,
-        payment_capture: '1', // auto capture
+        payment_capture: '1', 
       });
-  
+
       res.json(order);
     } catch (error) {
       res.status(500).send({ error: error.message });
@@ -336,26 +298,19 @@ routes.post('/create-order', async (req, res) => {
   });
 
 routes.post('/verifyOrder',  (req, res)=>{ 
-    
-    // STEP 7: Receive Payment Data
+
     const {order_id, payment_id} = req.body;     
     const razorpay_signature =  req.headers['x-razorpay-signature'];
 
-    // Pass yours key_secret here
-    const key_secret = YAEUthsup8SijNs3iveeVlL1;     
+    const key_secret = process.env.RAZORPAY_SECRET_KEY;     
 
-    // STEP 8: Verification & Send Response to User
-    
-    // Creating hmac object 
     let hmac = crypto.createHmac('sha256', key_secret); 
 
-    // Passing the data to be hashed
     hmac.update(order_id + "|" + payment_id);
-    
-    // Creating the hmac in the required format
+
     const generated_signature = hmac.digest('hex');
-    
-    
+
+
     if(razorpay_signature===generated_signature){
         res.json({success:true, message:"Payment has been verified"})
     }
