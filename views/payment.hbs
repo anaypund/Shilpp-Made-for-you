@@ -98,7 +98,7 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ amount: 1000, currency: 'INR', receipt: 'receipt#1', userId: document.getElementById('userId').value})
+        body: JSON.stringify({ amount: 1000, currency: 'INR', receipt: 'receipt#1' })
       });
       const order = await response.json();
       console.log(order);

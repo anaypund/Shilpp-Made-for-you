@@ -293,18 +293,20 @@ routes.post('/checkout/shipping-info', async (req, res) => {
 
 
 routes.post('/create-order', async (req, res) => {
-    const {currency, receipt, userId } = req.body;
-    const cartItems = await CartItem.find({ userId: Number(userId) }).populate('productId');
-        let shippingCharges = 100
+    const {currency, receipt } = req.body;
+    const userId = req.session.userId;
+    try {
+        const cartItems = await CartItem.find({ userId }).populate('productId');
+        let shippingCharges = 100;
         let subTotal = 0;
-          cartItems.forEach(item => {
-              subTotal += item.productId.price * item.quantity;
-          });
-        const costumer = await Checkout.find({ userId: Number(userId) })
-        if(costumer.state == "Maharashtra" && costumer.city == "Amravati"){
-            shippingCharges = 0
+        cartItems.forEach(item => {
+            subTotal += item.productId.price * item.quantity;
+        });
+        const customer = await Checkout.findOne({ userId });
+        if(customer && customer.state === "Maharashtra" && customer.city === "Amravati") {
+            shippingCharges = 0;
         }
-        total = subTotal + shippingCharges
+        const total = subTotal + shippingCharges;
 
     try {
       const order = await razorpay.orders.create({
