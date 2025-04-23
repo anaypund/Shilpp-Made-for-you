@@ -102,7 +102,12 @@ routes.get("/product-details", async (req, res) => {
         const productArray = await Products.find({ _id: productId });
         const product = productArray[0]; 
         const keyPoints = product.keyPoints;
-        res.render('product-details', { product : productArray, keyPoints : keyPoints, user: req.session.userId ? await User.findById(req.session.userId) : null}); 
+        const user = req.session.userId ? await User.findById(req.session.userId) : null;
+        res.render('product-details', { 
+            product: productArray, 
+            keyPoints: keyPoints,
+            user: user
+        }); 
     } catch (error) {
         res.status(500).send('Product not found');
     }
