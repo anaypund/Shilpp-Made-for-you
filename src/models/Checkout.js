@@ -1,8 +1,12 @@
-// models/CartItem.js
+
 const mongoose = require('mongoose');
 
 const checkoutSchema = new mongoose.Schema({
-  userId: { type: Number, ref: 'CartItem', required: true }, // Assuming you have a User model
+  userId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: true 
+  },
   name: {
     type: String,
     required: true
