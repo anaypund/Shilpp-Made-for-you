@@ -74,6 +74,23 @@ routes.get('/logout', (req, res) => {
     req.session.destroy();
     res.redirect('/');
 });
+
+routes.get('/profile', isAuthenticated, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        const orders = await Order.find({ userId: req.session.userId })
+            .sort({ createdAt: -1 })
+            .populate('items.productId');
+        
+        res.render('profile', { 
+            user: user,
+            orders: orders
+        });
+    } catch (error) {
+        console.error('Error fetching profile:', error);
+        res.status(500).send('Error loading profile');
+    }
+});
 const Razorpay = require('razorpay'); 
 const { RAZORPAY_ID_KEY, RAZORPAY_SECRET_KEY } = process.env;
 
