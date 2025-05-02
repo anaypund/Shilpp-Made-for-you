@@ -390,8 +390,6 @@ body {
 text-align: center;
 }
 
-*/
-
 /* Carousel Container */
 .banner-carousel {
     position: relative;
@@ -1554,4 +1552,27 @@ h1.page-title {
     padding: 5px 10px;
     border-radius: 4px;
     border: 1px solid #ddd;
+}
+
+.add-to-cart:hover {
+    background: #ff9a9e;
+    transition: 0.3s ease;
+    transform: translate(-10%, -10%);
+    padding: 20px 20px;
+}
+
+.add-to-cart.out-of-stock {
+    background: #cccccc;
+    cursor: not-allowed;
+}
+
+.add-to-cart.out-of-stock:hover {
+    transform: none;
+    padding: 15px 15px;
+}
+
+.inventory-status {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 10px;
 }

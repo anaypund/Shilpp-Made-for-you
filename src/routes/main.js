@@ -143,12 +143,21 @@ routes.post("/cart", isAuthenticated, async (req, res) => {
     const productId = req.body.id;
     const userId = req.session.userId;
     try {
+        const product = await Products.findById(productId);
+        if (!product || product.inventory <= 0) {
+            return res.status(400).send("Product is out of stock");
+        }
+
         let cartItem = await CartItem.findOne({
             userId: userId,
             productId: productId,
         });
 
         if (cartItem) {
+            // Check if increasing quantity exceeds inventory
+            if (cartItem.quantity + 1 > product.inventory) {
+                return res.status(400).send("Not enough inventory available");
+            }
             cartItem.quantity += 1;
             await cartItem.save();
         } else {

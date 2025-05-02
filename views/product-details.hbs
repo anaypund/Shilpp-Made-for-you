@@ -42,10 +42,15 @@
             <div class="price">
                 <span class="discounted-price">&#8377;{{this.price}}</span> <text>1500</text>
             </div>
-            <form action="/cart" method="POST">
-            <input type="hidden" name="id" value="{{this._id}}">
-            <button class="add-to-cart" onclick="openPopup()" type="submit">Add to Cart</button>
-            </form>
+            {{#if (eq this.inventory 0)}}
+                <button class="add-to-cart out-of-stock" disabled>Out of Stock</button>
+            {{else}}
+                <form action="/cart" method="POST">
+                <input type="hidden" name="id" value="{{this._id}}">
+                <button class="add-to-cart" onclick="openPopup()" type="submit">Add to Cart</button>
+                </form>
+                <div class="inventory-status">In Stock: {{this.inventory}} items</div>
+            {{/if}}
 
             <div class="description">
                 {{this.description}}
