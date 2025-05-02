@@ -393,6 +393,22 @@ routes.post("/verifyOrder", async (req, res) => {
             );
 
             // Create order with full details
+            // Check inventory for all items
+            for (const item of cartItems) {
+                const product = await Product.findById(item.productId._id);
+                if (!product || product.inventory < item.quantity) {
+                    throw new Error(`Not enough inventory for product: ${product.productName}`);
+                }
+            }
+
+            // Update inventory
+            for (const item of cartItems) {
+                await Product.findByIdAndUpdate(
+                    item.productId._id,
+                    { $inc: { inventory: -item.quantity } }
+                );
+            }
+
             const order = new Order({
                 userId,
                 items: cartItems.map(item => ({

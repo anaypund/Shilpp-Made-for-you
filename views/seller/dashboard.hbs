@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,7 +43,7 @@
                         <div class="product-image">
                             <img src="{{this.imagePath}}" alt="{{this.productName}}">
                             <div class="product-actions">
-                                <button onclick="showEditProductForm('{{this._id}}', '{{this.productName}}', {{this.price}}, '{{this.description}}', '{{this.keyPoints}}')">
+                                <button onclick="showEditProductForm('{{this._id}}', '{{this.productName}}', {{this.price}}, '{{this.description}}', '{{this.keyPoints}}', {{this.inventory}})">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button onclick="deleteProduct('{{this._id}}')">
@@ -111,7 +110,11 @@
                 </div>
                 <div class="form-group">
                     <label>Description</label>
-                    <textarea id="description" name="description" required></textarea>
+                    <input type="text" name="description" placeholder="Product Description" required>
+                </div>
+                <div class="form-group">
+                    <label>Available Quantity</label>
+                    <input type="number" name="inventory" placeholder="Available Quantity" required min="0">
                 </div>
                 <div class="form-group">
                     <label>Key Points (comma-separated)</label>
@@ -137,7 +140,7 @@
             document.getElementById('productModal').style.display = 'block';
         }
 
-        function showEditProductForm(id, name, price, description, keyPoints) {
+        function showEditProductForm(id, name, price, description, keyPoints, inventory) {
             document.getElementById('modalTitle').textContent = 'Edit Product';
             document.getElementById('productForm').action = `/seller/products/update/${id}`;
             document.getElementById('productId').value = id;
@@ -145,6 +148,7 @@
             document.getElementById('price').value = price;
             document.getElementById('description').value = description;
             document.getElementById('keyPoints').value = keyPoints;
+            document.getElementById('inventory').value = inventory;
             document.getElementById('productModal').style.display = 'block';
         }
 

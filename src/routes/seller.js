@@ -120,7 +120,7 @@ router.post(
   upload,
   async (req, res) => {
     try {
-      const { productName, price, description, keyPoints } = req.body;
+      const { productName, price, description, keyPoints, inventory } = req.body;
       const seller = await Seller.findById(req.session.sellerId);
 
       const product = new Product({
@@ -132,6 +132,7 @@ router.post(
         description,
         keyPoints: keyPoints.split(",").map((point) => point.trim()),
         keyWords: productName.toLowerCase().split(" "),
+        inventory: Number(inventory) || 0,
       });
 
       await product.save();

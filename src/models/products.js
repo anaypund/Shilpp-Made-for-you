@@ -33,6 +33,11 @@ const productSchema = mongoose.Schema({
         type: Array,
         required: true,
     },
+    inventory: {
+        type: Number,
+        required: true,
+        default: 0
+    },
 })
 
 
