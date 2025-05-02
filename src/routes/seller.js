@@ -101,11 +101,14 @@ router.get("/dashboard", isSellerAuthenticated, async (req, res) => {
   try {
     const seller = await Seller.findById(req.session.sellerId);
     const products = await Product.find({ sellerID: req.session.sellerId });
-    const orders = await Order.find({
-      "items.productId": { $in: products.map((p) => p._id) },
-    })
+    const SubOrder = require('../models/SubOrder');
+    const orders = await SubOrder.find({ sellerId: req.session.sellerId })
       .populate("items.productId")
-      .populate("userId");
+      .populate("mainOrderId")
+      .populate({
+        path: "mainOrderId",
+        populate: { path: "userId" }
+      });
 
     res.render("seller/dashboard", { seller, products, orders });
   } catch (error) {

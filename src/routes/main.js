@@ -419,6 +419,17 @@ routes.post("/verifyOrder", async (req, res) => {
                 );
             }
 
+            // Group cart items by seller
+            const itemsBySeller = {};
+            cartItems.forEach(item => {
+                const sellerId = item.productId.sellerID;
+                if (!itemsBySeller[sellerId]) {
+                    itemsBySeller[sellerId] = [];
+                }
+                itemsBySeller[sellerId].push(item);
+            });
+
+            // Create main order
             const order = new Order({
                 userId,
                 items: cartItems.map(item => ({
@@ -432,10 +443,30 @@ routes.post("/verifyOrder", async (req, res) => {
                 orderedAt: new Date()
             });
 
-            // Save order and clear cart
+            // Save main order
             const savedOrder = await order.save();
             if (!savedOrder) {
                 throw new Error("Failed to save order");
+            }
+
+            // Create sub-orders for each seller
+            const SubOrder = require('../models/SubOrder');
+            for (const [sellerId, items] of Object.entries(itemsBySeller)) {
+                const subOrderTotal = items.reduce((sum, item) => 
+                    sum + (item.quantity * item.productId.price), 0);
+                
+                const subOrder = new SubOrder({
+                    mainOrderId: savedOrder._id,
+                    sellerId: sellerId,
+                    items: items.map(item => ({
+                        productId: item.productId._id,
+                        quantity: item.quantity,
+                        price: item.productId.price
+                    })),
+                    totalAmount: subOrderTotal,
+                    status: "processing"
+                });
+                await subOrder.save();
             }
 
             await CartItem.deleteMany({ userId });
