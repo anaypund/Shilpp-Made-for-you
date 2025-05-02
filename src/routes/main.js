@@ -11,6 +11,7 @@ const crypto = require("crypto"); // Added for HMAC
 
 const User = require("../models/User");
 const Order = require("../models/Order"); // Added Order model
+const Product = require("../models/products");
 
 routes.use(
     session({
