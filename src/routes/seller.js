@@ -126,7 +126,7 @@ router.post(
       const product = new Product({
         productName,
         price: Number(price),
-        imagePath: "/images/" + req.file.filename,
+        imagePath: "static/images/" + req.file.filename,
         sellerName: seller.shopName,
         sellerID: seller._id,
         description,
