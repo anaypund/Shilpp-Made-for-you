@@ -151,4 +151,25 @@ router.post('/products/update/:id', isSellerAuthenticated, upload, async (req, r
   }
 });
 
+// Delete product route
+router.delete('/products/delete/:id', isSellerAuthenticated, async (req, res) => {
+  try {
+    await Product.findByIdAndDelete(req.params.id);
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).send('Error deleting product');
+  }
+});
+
+// Update order status route
+router.post('/orders/update-status/:id', isSellerAuthenticated, async (req, res) => {
+  try {
+    const { status } = req.body;
+    await Order.findByIdAndUpdate(req.params.id, { status });
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).send('Error updating order status');
+  }
+});
+
 module.exports = router;

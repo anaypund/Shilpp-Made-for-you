@@ -13,28 +13,48 @@
     <header class="header">
         <a href="/"><h1>SHiLPP</h1></a>
         <div class="header-icons">
-            <span class="user-greeting">{{seller.shopName}}</span>
-            <a href="/seller/logout"><i class="fas fa-sign-out-alt"></i></a>
+            <span class="user-greeting">Welcome, {{seller.shopName}}</span>
+            <a href="/seller/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
     </header>
 
     <div class="seller-dashboard">
-        <div class="dashboard-header">
-            <h2>Seller Dashboard</h2>
-            <button class="add-product-btn" onclick="showAddProductForm()">Add New Product</button>
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <i class="fas fa-box"></i>
+                <h3>Total Products</h3>
+                <p>{{products.length}}</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-shopping-cart"></i>
+                <h3>Total Orders</h3>
+                <p>{{orders.length}}</p>
+            </div>
+            <button class="add-product-btn" onclick="showAddProductForm()">
+                <i class="fas fa-plus"></i> Add New Product
+            </button>
         </div>
 
         <div class="dashboard-content">
             <div class="products-section">
-                <h3>Your Products</h3>
+                <h3><i class="fas fa-store"></i> Your Products</h3>
                 <div class="products-grid">
                     {{#each products}}
-                    <div class="product-card">
-                        <img src="{{this.imagePath}}" alt="{{this.productName}}">
+                    <div class="product-card" data-id="{{this._id}}">
+                        <div class="product-image">
+                            <img src="{{this.imagePath}}" alt="{{this.productName}}">
+                            <div class="product-actions">
+                                <button onclick="showEditProductForm('{{this._id}}', '{{this.productName}}', {{this.price}}, '{{this.description}}', '{{this.keyPoints}}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteProduct('{{this._id}}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                         <div class="product-info">
                             <h4>{{this.productName}}</h4>
                             <p class="price">₹{{this.price}}</p>
-                            <button onclick="showEditProductForm('{{this._id}}')">Edit</button>
                         </div>
                     </div>
                     {{/each}}
@@ -42,24 +62,30 @@
             </div>
 
             <div class="orders-section">
-                <h3>Recent Orders</h3>
+                <h3><i class="fas fa-shopping-bag"></i> Recent Orders</h3>
                 <div class="orders-grid">
                     {{#each orders}}
                     <div class="order-card">
                         <div class="order-header">
-                            <span class="order-id">Order #{{this._id}}</span>
+                            <span class="order-id">#{{this._id}}</span>
                             <span class="order-status {{this.status}}">{{this.status}}</span>
                         </div>
                         <div class="order-items">
                             {{#each this.items}}
                             <div class="order-item">
-                                <span>{{this.productId.productName}} x {{this.quantity}}</span>
+                                <span>{{this.productId.productName}} × {{this.quantity}}</span>
                                 <span>₹{{this.price}}</span>
                             </div>
                             {{/each}}
                         </div>
                         <div class="order-footer">
-                            <span>Total: ₹{{this.totalAmount}}</span>
+                            <span class="order-total">Total: ₹{{this.totalAmount}}</span>
+                            <select onchange="updateOrderStatus('{{this._id}}', this.value)" class="status-select">
+                                <option value="pending" {{#if (eq this.status 'pending')}}selected{{/if}}>Pending</option>
+                                <option value="processing" {{#if (eq this.status 'processing')}}selected{{/if}}>Processing</option>
+                                <option value="shipped" {{#if (eq this.status 'shipped')}}selected{{/if}}>Shipped</option>
+                                <option value="delivered" {{#if (eq this.status 'delivered')}}selected{{/if}}>Delivered</option>
+                            </select>
                         </div>
                     </div>
                     {{/each}}
@@ -69,27 +95,94 @@
     </div>
 
     <!-- Add Product Modal -->
-    <div id="addProductModal" class="modal">
+    <div id="productModal" class="modal">
         <div class="modal-content">
-            <h3>Add New Product</h3>
-            <form action="/seller/products/add" method="POST" enctype="multipart/form-data">
-                <input type="text" name="productName" placeholder="Product Name" required>
-                <input type="number" name="price" placeholder="Price" required>
-                <textarea name="description" placeholder="Description" required></textarea>
-                <input type="text" name="keyPoints" placeholder="Key Points (comma-separated)" required>
-                <input type="file" name="productImage" required>
-                <button type="submit">Add Product</button>
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">Add New Product</h3>
+            <form id="productForm" action="/seller/products/add" method="POST" enctype="multipart/form-data">
+                <input type="hidden" id="productId" name="productId">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="productName" name="productName" required>
+                </div>
+                <div class="form-group">
+                    <label>Price (₹)</label>
+                    <input type="number" id="price" name="price" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="description" name="description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Key Points (comma-separated)</label>
+                    <input type="text" id="keyPoints" name="keyPoints" required>
+                </div>
+                <div class="form-group">
+                    <label>Product Image</label>
+                    <input type="file" id="productImage" name="productImage" accept="image/*">
+                </div>
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-save"></i> Save Product
+                </button>
             </form>
         </div>
     </div>
 
     <script>
         function showAddProductForm() {
-            document.getElementById('addProductModal').style.display = 'block';
+            document.getElementById('modalTitle').textContent = 'Add New Product';
+            document.getElementById('productForm').action = '/seller/products/add';
+            document.getElementById('productId').value = '';
+            document.getElementById('productForm').reset();
+            document.getElementById('productModal').style.display = 'block';
         }
 
-        function showEditProductForm(productId) {
-            // Implement edit form logic
+        function showEditProductForm(id, name, price, description, keyPoints) {
+            document.getElementById('modalTitle').textContent = 'Edit Product';
+            document.getElementById('productForm').action = `/seller/products/update/${id}`;
+            document.getElementById('productId').value = id;
+            document.getElementById('productName').value = name;
+            document.getElementById('price').value = price;
+            document.getElementById('description').value = description;
+            document.getElementById('keyPoints').value = keyPoints;
+            document.getElementById('productModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('productModal').style.display = 'none';
+        }
+
+        function deleteProduct(productId) {
+            if(confirm('Are you sure you want to delete this product?')) {
+                fetch(`/seller/products/delete/${productId}`, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if(response.ok) {
+                        location.reload();
+                    }
+                });
+            }
+        }
+
+        function updateOrderStatus(orderId, status) {
+            fetch(`/seller/orders/update-status/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status })
+            }).then(response => {
+                if(response.ok) {
+                    location.reload();
+                }
+            });
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('productModal')) {
+                closeModal();
+            }
         }
     </script>
 </body>
