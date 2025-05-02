@@ -1,0 +1,96 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard - Shilpp</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <a href="/"><h1>SHiLPP</h1></a>
+        <div class="header-icons">
+            <span class="user-greeting">{{seller.shopName}}</span>
+            <a href="/seller/logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </header>
+
+    <div class="seller-dashboard">
+        <div class="dashboard-header">
+            <h2>Seller Dashboard</h2>
+            <button class="add-product-btn" onclick="showAddProductForm()">Add New Product</button>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="products-section">
+                <h3>Your Products</h3>
+                <div class="products-grid">
+                    {{#each products}}
+                    <div class="product-card">
+                        <img src="{{this.imagePath}}" alt="{{this.productName}}">
+                        <div class="product-info">
+                            <h4>{{this.productName}}</h4>
+                            <p class="price">₹{{this.price}}</p>
+                            <button onclick="showEditProductForm('{{this._id}}')">Edit</button>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+
+            <div class="orders-section">
+                <h3>Recent Orders</h3>
+                <div class="orders-grid">
+                    {{#each orders}}
+                    <div class="order-card">
+                        <div class="order-header">
+                            <span class="order-id">Order #{{this._id}}</span>
+                            <span class="order-status {{this.status}}">{{this.status}}</span>
+                        </div>
+                        <div class="order-items">
+                            {{#each this.items}}
+                            <div class="order-item">
+                                <span>{{this.productId.productName}} x {{this.quantity}}</span>
+                                <span>₹{{this.price}}</span>
+                            </div>
+                            {{/each}}
+                        </div>
+                        <div class="order-footer">
+                            <span>Total: ₹{{this.totalAmount}}</span>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <h3>Add New Product</h3>
+            <form action="/seller/products/add" method="POST" enctype="multipart/form-data">
+                <input type="text" name="productName" placeholder="Product Name" required>
+                <input type="number" name="price" placeholder="Price" required>
+                <textarea name="description" placeholder="Description" required></textarea>
+                <input type="text" name="keyPoints" placeholder="Key Points (comma-separated)" required>
+                <input type="file" name="productImage" required>
+                <button type="submit">Add Product</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showAddProductForm() {
+            document.getElementById('addProductModal').style.display = 'block';
+        }
+
+        function showEditProductForm(productId) {
+            // Implement edit form logic
+        }
+    </script>
+</body>
+</html>
