@@ -21,6 +21,9 @@ app.set('view engine', 'hbs')
 app.set("views","views")
 
 hbs.registerPartials("views/partials")
+hbs.registerHelper('eq', function(a, b) {
+    return a === b;
+});
 mongoose.set('strictQuery', false);
 
 // const securePassword = async(password)=>{
