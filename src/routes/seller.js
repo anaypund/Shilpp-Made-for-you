@@ -25,6 +25,9 @@ const upload = multer({
   },
 }).single("productImage");
 
+// Serve static files from public directory
+router.use("/static", express.static("public"));
+
 function checkFileType(file, cb) {
   const filetypes = /jpeg|jpg|png|gif/;
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
