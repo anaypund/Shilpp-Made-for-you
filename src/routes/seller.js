@@ -48,6 +48,33 @@ router.get('/login', (req, res) => {
   res.render('seller/login');
 });
 
+// Registration route
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password, shopName } = req.body;
+    
+    // Check if seller already exists
+    const existingSeller = await Seller.findOne({ email });
+    if (existingSeller) {
+      return res.render('seller/login', { error: 'Email already registered' });
+    }
+    
+    // Create new seller
+    const seller = new Seller({
+      name,
+      email,
+      password,
+      shopName
+    });
+    
+    await seller.save();
+    req.session.sellerId = seller._id;
+    res.redirect('/seller/dashboard');
+  } catch (error) {
+    res.render('seller/login', { error: 'Error creating account' });
+  }
+});
+
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;

@@ -4,24 +4,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Login - Shilpp</title>
+    <title>Seller Portal - Shilpp</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div class="login-container">
-        <h2>Seller Login</h2>
-        {{#if error}}
-        <div class="error">{{error}}</div>
-        {{/if}}
-        <form action="/seller/login" method="POST">
-            <div class="form-group">
-                <input type="email" name="email" placeholder="Email" required>
+    <div class="auth-page">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h2>Seller Portal</h2>
+                <p class="auth-subtitle">Login or register as a seller</p>
             </div>
-            <div class="form-group">
-                <input type="password" name="password" placeholder="Password" required>
+            {{#if error}}
+            <div class="error">{{error}}</div>
+            {{/if}}
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h3>Login</h3>
+                <form action="/seller/login" method="POST" class="auth-form">
+                    <div class="form-group">
+                        <input type="email" name="email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" name="password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="auth-button">Login</button>
+                </form>
+                <div class="auth-redirect">
+                    <p>Don't have a seller account? <a href="#" onclick="toggleForms()">Register here</a></p>
+                </div>
             </div>
-            <button type="submit">Login</button>
-        </form>
+
+            <!-- Registration Form -->
+            <div id="registerForm" style="display: none;">
+                <h3>Register as Seller</h3>
+                <form action="/seller/register" method="POST" class="auth-form">
+                    <div class="form-group">
+                        <input type="text" name="name" placeholder="Full Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="shopName" placeholder="Shop Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" name="email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" name="password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="auth-button">Register</button>
+                </form>
+                <div class="auth-redirect">
+                    <p>Already have an account? <a href="#" onclick="toggleForms()">Login here</a></p>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        function toggleForms() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            if (loginForm.style.display === 'none') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
+        }
+    </script>
 </body>
 </html>
