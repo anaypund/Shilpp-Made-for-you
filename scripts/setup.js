@@ -18,14 +18,12 @@ const createAdmin = async () => {
     // Create admin account
     const admin = new Admin({
       username: 'admin',
-      password: 'admin123', // This will be hashed automatically
-      email: 'admin@shilpp.com'
+      password: 'ShilppAdmin@123', // This will be hashed automatically
+      email: 'anaypund123@gmail.com'
     });
 
     await admin.save();
     console.log('Admin account created successfully');
-    console.log('Username: admin');
-    console.log('Password: admin123');
     
     process.exit(0);
   } catch (error) {
