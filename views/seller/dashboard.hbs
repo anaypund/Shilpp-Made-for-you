@@ -188,6 +188,18 @@
                 closeModal();
             }
         }
+
+          function validateImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+            if (!validImageTypes.includes(file.type)) {
+              alert("Please upload a valid image file (jpg, png, gif, or webp).");
+              input.value = ""; // Clear the input
+            }
+          }
     </script>
 </body>
 </html>

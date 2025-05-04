@@ -1555,20 +1555,18 @@ h1.page-title {
 }
 
 .add-to-cart:hover {
-    background: #ff9a9e;
+    background: #d64d73;
     transition: 0.3s ease;
-    transform: translate(-10%, -10%);
-    padding: 20px 20px;
 }
 
 .add-to-cart.out-of-stock {
-    background: #cccccc;
+    background: #ddd;
     cursor: not-allowed;
 }
 
 .add-to-cart.out-of-stock:hover {
     transform: none;
-    padding: 15px 15px;
+    background: #cccccc;
 }
 
 .inventory-status {

@@ -129,7 +129,7 @@ router.post(
       const product = new Product({
         productName,
         price: Number(price),
-        imagePath: "static/images/" + req.file.filename,
+        imagePath: "/static/images/" + req.file.filename,
         sellerName: seller.shopName,
         sellerID: seller._id,
         description,
@@ -152,16 +152,17 @@ router.post(
   upload,
   async (req, res) => {
     try {
-      const { productName, price, description, keyPoints } = req.body;
+      const { productName, inventory, price, description, keyPoints } = req.body;
       const updateData = {
         productName,
         price: Number(price),
         description,
+        inventory,
         keyPoints: keyPoints.split(",").map((point) => point.trim()),
       };
 
       if (req.file) {
-        updateData.imagePath = "/images/" + req.file.filename;
+        updateData.imagePath = "/static/images/" + req.file.filename;
       }
 
       await Product.findByIdAndUpdate(req.params.id, updateData);
