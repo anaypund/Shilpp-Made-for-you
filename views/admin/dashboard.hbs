@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Shilpp</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <h1>Admin Dashboard</h1>
+        <div class="header-icons">
+            <a href="/admin/logout" class="auth-link">Logout</a>
+        </div>
+    </header>
+
+    <div class="admin-stats">
+        <div class="stat-card">
+            <h3>Total Orders</h3>
+            <p>{{totalOrders}}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Products</h3>
+            <p>{{totalProducts}}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Users</h3>
+            <p>{{totalUsers}}</p>
+        </div>
+    </div>
+
+    <div class="admin-sections">
+        <section class="orders-section">
+            <h2>Recent Orders</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each orders}}
+                    <tr>
+                        <td>{{this._id}}</td>
+                        <td>{{this.userId.name}}</td>
+                        <td>₹{{this.totalAmount}}</td>
+                        <td>{{this.status}}</td>
+                        <td>
+                            <a href="/admin/orders/{{this._id}}" class="btn-view">View</a>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </section>
+    </div>
+</body>
+</html>
