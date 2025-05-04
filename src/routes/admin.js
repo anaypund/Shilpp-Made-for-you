@@ -63,6 +63,77 @@ router.get('/dashboard', isAdminAuthenticated, async (req, res) => {
   }
 });
 
+// Orders route
+router.get('/orders', isAdminAuthenticated, async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate('userId')
+      .sort({ orderedAt: -1 });
+    res.render('admin/orders', { orders });
+  } catch (error) {
+    res.status(500).send('Error loading orders');
+  }
+});
+
+// SubOrders route
+router.get('/suborders', isAdminAuthenticated, async (req, res) => {
+  try {
+    const suborders = await SubOrder.find()
+      .populate('sellerId')
+      .populate('mainOrderId')
+      .sort({ createdAt: -1 });
+    
+    const formattedSuborders = suborders.map(order => ({
+      ...order.toObject(),
+      isDelayed: order.isDelayed()
+    }));
+
+    res.render('admin/suborders', { suborders: formattedSuborders });
+  } catch (error) {
+    res.status(500).send('Error loading suborders');
+  }
+});
+
+// Sellers route
+router.get('/sellers', isAdminAuthenticated, async (req, res) => {
+  try {
+    const sellers = await Seller.find().sort({ createdAt: -1 });
+    res.render('admin/sellers', { sellers });
+  } catch (error) {
+    res.status(500).send('Error loading sellers');
+  }
+});
+
+// Products route
+router.get('/products', isAdminAuthenticated, async (req, res) => {
+  try {
+    const products = await Product.find().sort({ createdAt: -1 });
+    res.render('admin/products', { products });
+  } catch (error) {
+    res.status(500).send('Error loading products');
+  }
+});
+
+// Customers route
+router.get('/customers', isAdminAuthenticated, async (req, res) => {
+  try {
+    const customers = await User.find().sort({ createdAt: -1 });
+    res.render('admin/customers', { customers });
+  } catch (error) {
+    res.status(500).send('Error loading customers');
+  }
+});
+
+// Settings route
+router.get('/settings', isAdminAuthenticated, async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.session.adminId);
+    res.render('admin/settings', { admin });
+  } catch (error) {
+    res.status(500).send('Error loading settings');
+  }
+});
+
 // Get all suborders with status
 router.get('/suborders', isAdminAuthenticated, async (req, res) => {
   try {
