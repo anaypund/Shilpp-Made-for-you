@@ -6,58 +6,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Shilpp</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
-<body>
-    <header class="header">
-        <h1>Admin Dashboard</h1>
-        <div class="header-icons">
-            <a href="/admin/logout" class="auth-link">Logout</a>
+<body class="admin-body">
+    <div class="admin-sidebar">
+        <div class="sidebar-header">
+            <h2>Shilpp Admin</h2>
         </div>
-    </header>
-
-    <div class="admin-stats">
-        <div class="stat-card">
-            <h3>Total Orders</h3>
-            <p>{{totalOrders}}</p>
-        </div>
-        <div class="stat-card">
-            <h3>Total Products</h3>
-            <p>{{totalProducts}}</p>
-        </div>
-        <div class="stat-card">
-            <h3>Total Users</h3>
-            <p>{{totalUsers}}</p>
-        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard" class="nav-item active">
+                <i class="fas fa-chart-line"></i>
+                Dashboard
+            </a>
+            <a href="/admin/orders" class="nav-item">
+                <i class="fas fa-shopping-cart"></i>
+                Orders
+            </a>
+            <a href="/admin/suborders" class="nav-item">
+                <i class="fas fa-boxes"></i>
+                SubOrders
+            </a>
+            <a href="/admin/sellers" class="nav-item">
+                <i class="fas fa-store"></i>
+                Sellers
+            </a>
+            <a href="/admin/products" class="nav-item">
+                <i class="fas fa-box"></i>
+                Products
+            </a>
+            <a href="/admin/customers" class="nav-item">
+                <i class="fas fa-users"></i>
+                Customers
+            </a>
+            <div class="sidebar-footer">
+                <a href="/admin/settings" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+                <a href="/admin/logout" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+        </nav>
     </div>
 
-    <div class="admin-sections">
-        <section class="orders-section">
-            <h2>Recent Orders</h2>
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Customer</th>
-                        <th>Total</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{#each orders}}
-                    <tr>
-                        <td>{{this._id}}</td>
-                        <td>{{this.userId.name}}</td>
-                        <td>₹{{this.totalAmount}}</td>
-                        <td>{{this.status}}</td>
-                        <td>
-                            <a href="/admin/orders/{{this._id}}" class="btn-view">View</a>
-                        </td>
-                    </tr>
-                    {{/each}}
-                </tbody>
-            </table>
-        </section>
+    <div class="admin-main">
+        <div class="admin-stats">
+            <div class="stat-card">
+                <h3>Total Orders</h3>
+                <p>{{totalOrders}}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Products</h3>
+                <p>{{totalProducts}}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <p>{{totalUsers}}</p>
+            </div>
+        </div>
+
+        <div class="admin-sections">
+            <section class="orders-section">
+                <h2>Recent Orders</h2>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each orders}}
+                        <tr>
+                            <td>{{this._id}}</td>
+                            <td>{{this.userId.name}}</td>
+                            <td>₹{{this.totalAmount}}</td>
+                            <td>{{this.status}}</td>
+                            <td>
+                                <a href="/admin/orders/{{this._id}}" class="btn-view">View</a>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </section>
+        </div>
     </div>
 </body>
 </html>
