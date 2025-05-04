@@ -25,6 +25,17 @@ hbs.registerPartials("views/partials")
 hbs.registerHelper('eq', function(a, b) {
     return a === b;
 });
+
+hbs.registerHelper('formatDate', function(date, format) {
+    return new Date(date).toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+});
 mongoose.set('strictQuery', false);
 
 // const securePassword = async(password)=>{

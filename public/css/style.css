@@ -1527,6 +1527,97 @@ h1.page-title {
     background: #d64d73;
 }
 
+/* Table Styles */
+.table-container {
+    margin: 20px;
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.data-table th {
+    background: #f8f9fa;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.data-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #dee2e6;
+    color: #444;
+}
+
+.data-table tr:hover {
+    background: #f8f9fa;
+}
+
+.data-table .status {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.data-table .status.pending { background: #fff3cd; color: #856404; }
+.data-table .status.processing { background: #cce5ff; color: #004085; }
+.data-table .status.shipped { background: #d4edda; color: #155724; }
+.data-table .status.delivered { background: #c3e6cb; color: #1e7e34; }
+.data-table .status.delayed { background: #f8d7da; color: #721c24; }
+
+.date-cell {
+    font-size: 0.9em;
+    color: #666;
+    white-space: nowrap;
+}
+
+.amount-cell {
+    font-weight: 500;
+    color: #28a745;
+}
+
+.action-cell {
+    display: flex;
+    gap: 8px;
+}
+
+.table-button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.table-button.view {
+    background: #e3f2fd;
+    color: #0d47a1;
+}
+
+.table-button.edit {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.table-button.delete {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.table-button:hover {
+    filter: brightness(0.95);
+}
+
 .admin-table img {
     border-radius: 5px;
     object-fit: cover;
