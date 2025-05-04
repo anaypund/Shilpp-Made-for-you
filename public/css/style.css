@@ -1474,6 +1474,68 @@ h1.page-title {
     background: #45a049;
 }
 
+/* Admin Pages Styles */
+.settings-section {
+    padding: 20px;
+}
+
+.settings-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.btn-primary {
+    background: #e75480;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.btn-primary:hover {
+    background: #d64d73;
+}
+
+.admin-table img {
+    border-radius: 5px;
+    object-fit: cover;
+}
+
+.delayed {
+    background-color: #ffebee;
+}
+
 /* Seller Dashboard Styles */
 .seller-dashboard {
     padding: 20px;
