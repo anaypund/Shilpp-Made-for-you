@@ -15,6 +15,7 @@ app.use(BodyParser.urlencoded({ extended: true }))
 app.use("/static",express.static("public"))
 app.use("",routes)
 app.use("/seller", sellerRoutes)
+app.use("/admin", require("./routes/admin"));
 app.use(express.json())
 
 app.set('view engine', 'hbs')

@@ -187,19 +187,51 @@ router.delete(
   },
 );
 
-// Update order status route
+// Ship to admin route
 router.post(
-  "/orders/update-status/:id",
+  "/suborders/:id/ship-to-admin",
   isSellerAuthenticated,
   async (req, res) => {
     try {
-      const { status } = req.body;
-      await Order.findByIdAndUpdate(req.params.id, { status });
-      res.sendStatus(200);
+      const { trackingId } = req.body;
+      const subOrder = await SubOrder.findById(req.params.id);
+      
+      if (!subOrder || subOrder.sellerId.toString() !== req.session.sellerId) {
+        return res.status(403).send("Unauthorized");
+      }
+
+      subOrder.shippingStatus = 'shipped-to-admin';
+      subOrder.shippedAt = new Date();
+      if (trackingId) {
+        subOrder.trackingId = trackingId;
+      }
+      
+      await subOrder.save();
+      res.json({ success: true, subOrder });
     } catch (error) {
-      res.status(500).send("Error updating order status");
+      res.status(500).send("Error updating shipping status");
     }
-  },
+  }
 );
+
+// Get seller's suborders with status and deadline
+router.get("/suborders", isSellerAuthenticated, async (req, res) => {
+  try {
+    const subOrders = await SubOrder.find({ 
+      sellerId: req.session.sellerId 
+    })
+    .populate("mainOrderId")
+    .sort({ createdAt: -1 });
+
+    const formattedOrders = subOrders.map(order => ({
+      ...order.toObject(),
+      isDelayed: order.isDelayed()
+    }));
+
+    res.json(formattedOrders);
+  } catch (error) {
+    res.status(500).send("Error fetching suborders");
+  }
+});
 
 module.exports = router;

@@ -455,6 +455,10 @@ routes.post("/verifyOrder", async (req, res) => {
                 const subOrderTotal = items.reduce((sum, item) => 
                     sum + (item.quantity * item.productId.price), 0);
                 
+                // Calculate deadline (3 days from now)
+                const deadline = new Date();
+                deadline.setDate(deadline.getDate() + 3);
+
                 const subOrder = new SubOrder({
                     mainOrderId: savedOrder._id,
                     sellerId: sellerId,
@@ -464,7 +468,9 @@ routes.post("/verifyOrder", async (req, res) => {
                         price: item.productId.price
                     })),
                     totalAmount: subOrderTotal,
-                    status: "processing"
+                    status: "processing",
+                    deadline: deadline,
+                    shippingStatus: "pending"
                 });
                 await subOrder.save();
             }

@@ -31,15 +31,36 @@ const subOrderSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  status: {
+  deadline: {
+    type: Date,
+    required: true
+  },
+  shippingStatus: {
     type: String,
-    enum: ['pending', 'processing', 'shipped', 'delivered'],
+    enum: ['pending', 'shipped-to-admin', 'delivered-to-admin', 'shipped-to-customer', 'delivered-to-customer'],
     default: 'pending'
+  },
+  shippedAt: {
+    type: Date
+  },
+  deliveredToAdminAt: {
+    type: Date
+  },
+  trackingId: {
+    type: String
   },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
+
+// Add method to check if suborder is delayed
+subOrderSchema.methods.isDelayed = function() {
+  if (this.shippingStatus === 'pending') {
+    return Date.now() > this.deadline;
+  }
+  return false;
+};
 
 module.exports = mongoose.model('SubOrder', subOrderSchema);
