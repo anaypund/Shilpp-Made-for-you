@@ -5,6 +5,7 @@ const Order = require('../models/Order');
 const User = require('../models/User');
 const Product = require('../models/products');
 const SubOrder = require('../models/SubOrder');
+const Seller = require('../models/Seller');
 
 // Admin authentication middleware
 const isAdminAuthenticated = (req, res, next) => {
