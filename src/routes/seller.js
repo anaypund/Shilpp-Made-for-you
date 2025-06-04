@@ -3,6 +3,7 @@ const router = express.Router();
 const Seller = require("../models/Seller");
 const Product = require("../models/products");
 const Order = require("../models/Order");
+const SubOrder = require("../models/SubOrder");
 const multer = require("multer");
 const path = require("path");
 
@@ -186,6 +187,33 @@ router.delete(
     }
   },
 );
+
+//Order Status Management
+router.post("/orders/update-status/:id", isSellerAuthenticated, async (req, res) => {
+  try {
+    console.log("Updating order status for suborder ID:", req.params.id);
+    console.log("New status:", req.body.status);
+    console.log("Seller ID from session:", req.session.sellerId);
+    const { status } = req.body;
+    const subOrder = await SubOrder.findById(req.params.id);
+    console.log(subOrder.sellerId)
+    
+    if (!subOrder || subOrder.sellerId.toString() !== req.session.sellerId.toString()) {
+      console.log("Unauthorized access attempt");
+      return res.status(403).send("Unauthorized");
+    }
+
+    subOrder.shippingStatus = status;
+    console.log("SubOrder before saving:", subOrder);
+    await subOrder.save();
+    console.log("Order status updated successfully:", subOrder);
+    res.json({ success: true, subOrder });
+  }catch (error) {
+    console.error("Error during order update:", error);
+    res.status(500).send("Error updating order status");
+  }
+
+  });
 
 // Ship to admin route
 router.post(

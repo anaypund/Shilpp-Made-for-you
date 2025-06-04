@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order #{{orders._id}} - Admin View</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        .order-details-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            max-width: 900px;
+            margin: 30px auto;
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 18px;
+            margin-bottom: 20px;
+        }
+        .order-id {
+            font-size: 1.2em;
+            color: #e75480;
+            font-weight: 600;
+        }
+        .order-status {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 1em;
+            font-weight: 600;
+            background: #f5f5f5;
+            color: #333;
+            margin-left: 10px;
+        }
+        .order-status.pending { background: #fff3cd; color: #856404; }
+        .order-status.processing { background: #cce5ff; color: #004085; }
+        .order-status.shipped { background: #d4edda; color: #155724; }
+        .order-status.delivered { background: #c3e6cb; color: #155724; }
+        .order-meta {
+            color: #666;
+            font-size: 0.95em;
+        }
+        .customer-info, .shipping-info {
+            margin-bottom: 18px;
+        }
+        .customer-info h4, .shipping-info h4 {
+            color: #e75480;
+            margin-bottom: 6px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+        }
+        .items-table th, .items-table td {
+            border-bottom: 1px solid #eee;
+            padding: 10px 8px;
+            text-align: left;
+        }
+        .items-table th {
+            background: #f8f9fa;
+        }
+        .total-row td {
+            font-weight: bold;
+            color: #e75480;
+            font-size: 1.1em;
+        }
+        .back-btn {
+            display: inline-block;
+            background: #e75480;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-bottom: 18px;
+            transition: background 0.3s;
+        }
+        .back-btn:hover {
+            background: #d64d77;
+        }
+    </style>
+</head>
+<body class="admin-body">
+    <div class="admin-sidebar">
+        <div class="sidebar-header">
+            <h2>Shilpp Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/admin/dashboard" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                Dashboard
+            </a>
+            <a href="/admin/orders" class="nav-item active">
+                <i class="fas fa-shopping-cart"></i>
+                Orders
+            </a>
+            <a href="/admin/suborders" class="nav-item">
+                <i class="fas fa-boxes"></i>
+                SubOrders
+            </a>
+            <a href="/admin/sellers" class="nav-item">
+                <i class="fas fa-store"></i>
+                Sellers
+            </a>
+            <a href="/admin/products" class="nav-item">
+                <i class="fas fa-box"></i>
+                Products
+            </a>
+            <a href="/admin/customers" class="nav-item">
+                <i class="fas fa-users"></i>
+                Customers
+            </a>
+            <div class="sidebar-footer">
+                <a href="/admin/settings" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+                <a href="/admin/logout" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+        </nav>
+    </div>
+    <div class="admin-main">
+        <a href="/admin/orders" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Orders</a>
+        <section class="order-details-section">
+            <div class="order-header">
+                <div>
+                    <div class="order-id">Order #{{orders._id}}</div>
+                    <div class="order-meta">
+                        Placed on: {{formatDate orders.orderedAt "DD MMM YYYY, HH:mm"}}<br>
+                        Payment: {{orders.paymentMethod}}<br>
+                        <span class="order-status {{orders.status}}">{{orders.status}}</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="customer-info">
+                        <h4>Customer</h4>
+                        <div><i class="fas fa-user"></i> {{orders.userId.name}}</div>
+                        <div><i class="fas fa-envelope"></i> {{orders.userId.email}}</div>
+                    </div>
+                    <div class="shipping-info">
+                        <h4>Shipping Address</h4>
+                        <div>
+                            {{orders.shippingAddress.address}},<br>
+                            {{orders.shippingAddress.city}}, {{orders.shippingAddress.state}}<br>
+                            {{orders.shippingAddress.pincode}}, {{orders.shippingAddress.country}}
+                        </div>
+                        <div><i class="fas fa-phone"></i> {{orders.shippingAddress.phone}}</div>
+                    </div>
+                </div>
+            </div>
+            <h4>Order Items</h4>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Variant</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each orders.items}}
+                    <tr>
+                        <td>
+                            {{#if this.image}}
+                                <img src="{{this.image}}" alt="{{this.name}}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle;">
+                            {{/if}}
+                            {{this.name}}
+                        </td>
+                        <td>
+                            {{#if this.variant}}{{this.variant}}{{else}}—{{/if}}
+                        </td>
+                        <td>{{this.quantity}}</td>
+                        <td>₹{{this.price}}</td>
+                        <td>₹{{this.subtotal}}</td>
+                    </tr>
+                    {{/each}}
+                    <tr class="total-row">
+                        <td colspan="4" style="text-align:right;">Total Amount:</td>
+                        <td>₹{{orders.totalAmount}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="margin-top:24px;">
+                <strong>Status:</strong>
+                <span class="order-status {{orders.status}}">{{orders.status}}</span>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

@@ -77,24 +77,21 @@
         </div>
 
         <!-- Payment Form -->
-        <div  class="checkout-form">
+        <div class="checkout-form">
             <h2>Payment Options</h2>
             <div class="form-group">
                 <input type="hidden" name="userId" value="{{userId}}" id="userId">
                 <input type="hidden" name="name" value="{{name}}" id="name">
                 <input type="hidden" name="email" value="{{email}}" id="email">
                 <input type="hidden" name="contact" value="{{contact}}" id="contact">
-                <input type="hidden" name="total" value="{{total}}">
+                <input type="hidden" name="total" value="{{total}}" id="total">
                 <label for="paymentMethod">Payment Method</label>
                 <select id="paymentMethod" name="paymentMethod" required>
-                    <option value="creditCard">Credit Card</option>
-                    <option value="debitCard">Debit Card</option>
-                    <option value="paypal">PayPal</option>
-                    <option value="netBanking">Net Banking</option>
+                    <option value="online">UPI / Online</option>
+                    <option value="cod">Cash on Delivery</option>
                 </select>
             </div>
-
-            <button type="submit" id="pay-btn" class="pay-now-btn">Pay Now</button>
+            <button type="button" id="pay-btn" class="pay-now-btn">Pay Now</button>
         </div>
     </main>
 
@@ -109,59 +106,99 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const payBtn = document.getElementById('pay-btn');
+    const paymentMethod = document.getElementById('paymentMethod');
 
-   document.getElementById('pay-btn').onclick = async function () {
-      const response = await fetch('/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ amount: 1000, currency: 'INR', receipt: 'receipt#1' })
-      });
-      const order = await response.json();
-      console.log(order);
+    // Default: online
+    let currentMethod = paymentMethod.value;
 
-      const options = {
-        key: 'rzp_test_TMlzfWIiuTjqpN', // Enter the Key ID generated from the Dashboard
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Shilpp',
-        description: 'Test Transaction',
-        order_id: order.id,
-        handler: function (response) {
-          // Handle successful payment
-          fetch('/verifyOrder', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-razorpay-signature': response.razorpay_signature
-            },
-            body: JSON.stringify({ 
-              payment_id: response.razorpay_payment_id, 
-              order_id: order.id 
-            })
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              window.location.href = `/success?orderId=${data.orderId}`; // Redirect to success page with order ID
-            } else {
-              alert('Payment verification failed: ' + data.message);
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred during payment verification');
-          });
-        },
-        prefill: {
-          name: document.getElementById('name').value,
-          email: document.getElementById('email').value,
-          contact: document.getElementById('contact').value
+    paymentMethod.addEventListener('change', function () {
+        currentMethod = this.value;
+        if (currentMethod === 'online') {
+            payBtn.textContent = 'Pay Now';
+        } else {
+            payBtn.textContent = 'Place Order';
         }
-      };
+    });
 
-      const rzp1 = new Razorpay(options);
-      rzp1.open();
-    }
+    payBtn.onclick = async function () {
+        if (currentMethod === 'online') {
+            // Razorpay logic (as before)
+            const response = await fetch('/create-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount: document.getElementById('total').value, currency: 'INR', receipt: 'receipt#1' })
+            });
+            const order = await response.json();
+            const options = {
+                key: 'rzp_test_TMlzfWIiuTjqpN',
+                amount: order.amount,
+                currency: order.currency,
+                name: 'Shilpp',
+                description: 'Test Transaction',
+                order_id: order.id,
+                handler: function (response) {
+                    fetch('/verifyOrder', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-razorpay-signature': response.razorpay_signature
+                        },
+                        body: JSON.stringify({ 
+                            payment_id: response.razorpay_payment_id, 
+                            order_id: order.id 
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = `/success?orderId=${data.orderId}`;
+                        } else {
+                            alert('Payment verification failed: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred during payment verification');
+                    });
+                },
+                prefill: {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    contact: document.getElementById('contact').value
+                }
+            };
+            const rzp1 = new Razorpay(options);
+            rzp1.open();
+        } else if (currentMethod === 'cod') {
+            // COD logic: create order directly and redirect to success
+            payBtn.disabled = true;
+            payBtn.textContent = 'Placing Order...';
+            const res = await fetch('/create-cod-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: document.getElementById('userId').value,
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    contact: document.getElementById('contact').value,
+                    total: document.getElementById('total').value
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = `/success?orderId=${data.orderId}`;
+            } else {
+                alert('Order failed: ' + (data.message || 'Unknown error'));
+                payBtn.disabled = false;
+                payBtn.textContent = 'Place Order';
+            }
+        }
+    };
+});
 </script>

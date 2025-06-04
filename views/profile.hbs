@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,7 +62,13 @@
                             </div>
                             <div class="order-address">
                                 <i class="fas fa-map-marker-alt"></i>
-                                <small>{{this.shippingAddress}}</small>
+                                <small>
+                                    {{this.shippingAddress.address}}, 
+                                    {{this.shippingAddress.city}}, 
+                                    {{this.shippingAddress.state}}, 
+                                    {{this.shippingAddress.country}} - 
+                                    {{this.shippingAddress.pincode}}
+                                </small>
                             </div>
                         </div>
                     {{/each}}

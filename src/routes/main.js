@@ -234,8 +234,8 @@ routes.get("/checkout/payment", async (req, res) => {
         const costumer = await Checkout.findOne({ userId: userId });
         if (
             costumer &&
-            costumer.state == "Maharashtra" &&
-            costumer.city == "Amravati"
+            costumer.state.trim().toLowerCase() === "mh" &&
+            costumer.city.trim().toLowerCase() === "amravati"
         ) {
             shippingCharges = 0;
         }
@@ -279,57 +279,53 @@ routes.post("/checkout/shipping-info", async (req, res) => {
         address,
         pincode,
     } = req.body;
-    console.log(userId);
-    const checkout = await Checkout.find({ userId: userId });
 
-    if (checkout) {
-        try {
+    // Basic validation
+    if (!userId || !name || !phoneNumber || !email || !state || !country || !city || !address || !pincode) {
+        return res.status(400).send("All fields are required.");
+    }
+
+    try {
+        const checkout = await Checkout.findOne({ userId: userId });
+
+        if (!checkout) {
+            // Create new checkout info
             const item = new Checkout({
-                userId: userId,
-                name: name,
-                address: address,
-                city: city,
-                state: state,
-                country: country,
+                userId,
+                name,
+                address,
+                city,
+                state,
+                country,
                 pinCode: pincode,
                 payMethod: "Not Specified",
-                email: email,
-                phoneNumber: phoneNumber,
+                email,
+                phoneNumber,
             });
-            const tempVar = await item.save();
-            res.redirect(`/checkout/payment?UserID=${userId}`);
-        } catch (error) {
-            console.error("Error adding customer information:", error);
-        }
-    } else {
-        try {
-            const result = await Checkout.updateOne(
-                { userId: userId },
+            await item.save();
+        } else {
+            // Update existing checkout info
+            await Checkout.updateOne(
+                { userId },
                 {
                     $set: {
-                        userId: userId,
-                        name: name,
-                        address: address,
-                        city: city,
-                        state: state,
-                        country: country,
+                        name,
+                        address,
+                        city,
+                        state,
+                        country,
                         pinCode: pincode,
                         payMethod: "Not Specified",
-                        email: email,
-                        phoneNumber: phoneNumber,
+                        email,
+                        phoneNumber,
                     },
-                },
+                }
             );
-
-            if (result.matchedCount > 0) {
-                console.log("Customer information updated successfully.");
-            } else {
-                console.log("No customer found with the specified userId.");
-            }
-            res.redirect(`/checkout/payment?UserID=${userId}`);
-        } catch (error) {
-            console.error("Error updating customer information:", error);
         }
+        res.redirect(`/checkout/payment?UserID=${userId}`);
+    } catch (error) {
+        console.error("Error saving customer information:", error);
+        res.status(500).send("Error saving customer information");
     }
 });
 
@@ -346,7 +342,7 @@ routes.post("/create-order", async (req, res) => {
         const customer = await Checkout.findOne({ userId });
         if (
             customer &&
-            customer.state === "Maharashtra" &&
+            customer.state === "MH" &&
             customer.city === "Amravati"
         ) {
             shippingCharges = 0;
@@ -438,9 +434,17 @@ routes.post("/verifyOrder", async (req, res) => {
                     price: item.productId.price
                 })),
                 totalAmount,
-                shippingAddress: `${customer.address}, ${customer.city}, ${customer.state}, ${customer.pinCode}`,
+                shippingAddress: {
+                    address: customer.address,
+                    city: customer.city,
+                    state: customer.state,
+                    country: customer.country,
+                    pincode: customer.pinCode
+                },
                 status: "processing",
-                orderedAt: new Date()
+                orderedAt: new Date(),
+                paymentMethod: "online",
+                paymentId: payment_id,
             });
 
             // Save main order
@@ -496,7 +500,6 @@ routes.post("/verifyOrder", async (req, res) => {
     }
 });
 
-module.exports = routes;
 // Success page route
 routes.get('/success', isAuthenticated, async (req, res) => {
     try {
@@ -514,3 +517,126 @@ routes.get('/success', isAuthenticated, async (req, res) => {
         res.status(500).send('Error rendering success page')
     }
 });
+
+routes.post("/create-cod-order", isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const cartItems = await CartItem.find({ userId }).populate("productId");
+
+        if (!cartItems || cartItems.length === 0) {
+            return res.status(400).json({ success: false, message: "No items found in cart" });
+        }
+
+        const customer = await Checkout.findOne({ userId });
+        if (!customer) {
+            return res.status(400).json({ success: false, message: "Customer information not found" });
+        }
+
+        // Calculate total amount
+        let shippingCharges = 100;
+        if (customer.state === "MH" && customer.city === "Amravati") {
+            shippingCharges = 0;
+        }
+        const totalAmount = cartItems.reduce(
+            (total, item) => total + (item.productId.price * item.quantity),
+            0
+        ) + shippingCharges;
+
+        // Check inventory for all items
+        for (const item of cartItems) {
+            const product = await Product.findById(item.productId._id);
+            if (!product || product.inventory < item.quantity) {
+                return res.status(400).json({ success: false, message: `Not enough inventory for product: ${product.productName}` });
+            }
+        }
+
+        // Update inventory
+        for (const item of cartItems) {
+            await Product.findByIdAndUpdate(
+                item.productId._id,
+                { $inc: { inventory: -item.quantity } }
+            );
+        }
+
+        // Group cart items by seller
+        const itemsBySeller = {};
+        cartItems.forEach(item => {
+            const sellerId = item.productId.sellerID;
+            if (!itemsBySeller[sellerId]) {
+                itemsBySeller[sellerId] = [];
+            }
+            itemsBySeller[sellerId].push(item);
+        });
+
+        // Create main order
+        const order = new Order({
+            userId,
+            items: cartItems.map(item => ({
+                productId: item.productId._id,
+                quantity: item.quantity,
+                price: item.productId.price
+            })),
+            totalAmount,
+            shippingAddress: {
+                address: customer.address,
+                city: customer.city,
+                state: customer.state,
+                country: customer.country,
+                pincode: customer.pinCode
+            },
+            status: "processing",
+            orderedAt: new Date(),
+            paymentMethod: "cod"
+        });
+
+        // Save main order
+        const savedOrder = await order.save();
+        if (!savedOrder) {
+            return res.status(500).json({ success: false, message: "Failed to save order" });
+        }
+
+        // Create sub-orders for each seller
+        const SubOrder = require('../models/SubOrder');
+        for (const [sellerId, items] of Object.entries(itemsBySeller)) {
+            const subOrderTotal = items.reduce((sum, item) => 
+                sum + (item.quantity * item.productId.price), 0);
+            
+            // Calculate deadline (3 days from now)
+            const deadline = new Date();
+            deadline.setDate(deadline.getDate() + 3);
+
+            const subOrder = new SubOrder({
+                mainOrderId: savedOrder._id,
+                sellerId: sellerId,
+                items: items.map(item => ({
+                    productId: item.productId._id,
+                    quantity: item.quantity,
+                    price: item.productId.price
+                })),
+                totalAmount: subOrderTotal,
+                status: "processing",
+                deadline: deadline,
+                shippingStatus: "pending"
+            });
+            await subOrder.save();
+        }
+
+        await CartItem.deleteMany({ userId });
+
+        res.json({
+            success: true,
+            message: "Order placed successfully",
+            orderId: savedOrder._id,
+            redirectUrl: '/success'
+        });
+    } catch (error) {
+        console.error("Error creating COD order:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error creating COD order",
+            errorDetails: error.message
+        });
+    }
+});
+
+module.exports = routes;

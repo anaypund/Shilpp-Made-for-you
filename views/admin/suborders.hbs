@@ -117,7 +117,7 @@
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>SubOrder ID</th>
+                            {{!-- <th>SubOrder ID</th> --}}
                             <th>Main Order</th>
                             <th>Seller</th>
                             <th>Items</th>
@@ -131,7 +131,7 @@
                     <tbody>
                         {{#each suborders}}
                         <tr>
-                            <td>#{{this._id}}</td>
+                            {{!-- <td>#{{this._id}}</td> --}}
                             <td>#{{this.mainOrderId}}</td>
                             <td>{{this.sellerId.name}}</td>
                             <td>{{this.items.length}} items</td>
@@ -141,7 +141,10 @@
                             <td class="date-cell">{{formatDate this.createdAt "DD MMM YYYY, HH:mm"}}</td>
                             <td class="action-cell">
                                 <button class="table-button view">View</button>
-                                <button class="table-button edit">Update</button>
+                                <select onchange="updateOrderStatus('{{this._id}}', this.value)" class="table-button edit">
+                                    <option value="pending" {{#if (eq this.adminShippingStatus 'pending')}}selected{{/if}}>Pending</option>
+                                    <option value="delivered-to-admin" {{#if (eq this.adminShippingStatus 'delivered-to-admin')}}selected{{/if}}>Delivered</option>
+                                </select>
                             </td>
                         </tr>
                         {{/each}}
@@ -151,4 +154,25 @@
         </div>
     </div>
 </body>
+<script>
+    function updateOrderStatus(orderId, status) {
+            fetch(`/admin/suborders/update-status/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ status })
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    console.error('Failed to update:', response.status);
+                    response.text().then(text => console.error('Server response:', text));
+                }
+            })
+            .catch(err => console.error('Fetch error:', err));
+        }
+</script>
 </html>

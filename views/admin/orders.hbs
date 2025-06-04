@@ -135,7 +135,12 @@
                                 <td class="date-cell">{{formatDate this.orderedAt "DD MMM YYYY, HH:mm"}}</td>
                                 <td class="action-cell">
                                     <a href="/admin/orders/{{this._id}}" class="table-button view">View</a>
-                                    <button class="table-button edit">Update</button>
+                                    <select onchange="updateOrderStatus('{{this._id}}', this.value)" class="table-button edit">
+                                    <option value="pending" {{#if (eq this.status 'pending')}}selected{{/if}}>Pending</option>
+                                    <option value="processing" {{#if (eq this.status 'processing')}}selected{{/if}}>Processing</option>
+                                    <option value="shipped" {{#if (eq this.status 'shipped')}}selected{{/if}}>Shipped</option>
+                                    <option value="delivered" {{#if (eq this.status 'delivered')}}selected{{/if}}>Delivered</option>
+                                </select>
                                 </td>
                             </tr>
                             {{/each}}
@@ -146,4 +151,25 @@
         </div>
     </div>
 </body>
+<script>
+    function updateOrderStatus(orderId, status) {
+            fetch(`/admin/orders/update-status/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ status })
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    console.error('Failed to update:', response.status);
+                    response.text().then(text => console.error('Server response:', text));
+                }
+            })
+            .catch(err => console.error('Fetch error:', err));
+        }
+</script>
 </html>

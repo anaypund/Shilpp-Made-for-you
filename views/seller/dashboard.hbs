@@ -67,7 +67,13 @@
                     <div class="order-card">
                         <div class="order-header">
                             <span class="order-id">#{{this._id}}</span>
-                            <span class="order-status {{this.shippingStatus}}">{{this.shippingStatus}}</span>
+                            <span class="order-status {{this.adminShippingStatus}}">
+                            {{#if (eq this.adminShippingStatus "delivered-to-admin")}}
+                                Delivered
+                            {{else}}
+                                {{this.adminShippingStatus}}
+                            {{/if}}
+                            </span>
                         </div>
                         <div class="order-items">
                             {{#each this.items}}
@@ -80,10 +86,10 @@
                         <div class="order-footer">
                             <span class="order-total">Total: ₹{{this.totalAmount}}</span>
                             <select onchange="updateOrderStatus('{{this._id}}', this.value)" class="status-select">
-                                <option value="pending" {{#if (eq this.status 'pending')}}selected{{/if}}>Pending</option>
-                                <option value="processing" {{#if (eq this.status 'processing')}}selected{{/if}}>Processing</option>
-                                <option value="shipped" {{#if (eq this.status 'shipped')}}selected{{/if}}>Shipped</option>
-                                <option value="delivered" {{#if (eq this.status 'delivered')}}selected{{/if}}>Delivered</option>
+                                <option value="pending" {{#if (eq this.shippingStatus 'pending')}}selected{{/if}}>Pending</option>
+                                <option value="processing" {{#if (eq this.shippingStatus 'processing')}}selected{{/if}}>Processing</option>
+                                <option value="shipped" {{#if (eq this.shippingStatus 'shipped')}}selected{{/if}}>Shipped</option>
+                                <option value="delivered" {{#if (eq this.shippingStatus 'delivered')}}selected{{/if}}>Delivered</option>
                             </select>
                         </div>
                     </div>
@@ -174,12 +180,18 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({ status })
-            }).then(response => {
-                if(response.ok) {
+            })
+            .then(response => {
+                if (response.ok) {
                     location.reload();
+                } else {
+                    console.error('Failed to update:', response.status);
+                    response.text().then(text => console.error('Server response:', text));
                 }
-            });
+            })
+            .catch(err => console.error('Fetch error:', err));
         }
 
         // Close modal when clicking outside

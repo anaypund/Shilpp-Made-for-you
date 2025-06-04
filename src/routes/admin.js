@@ -76,6 +76,38 @@ router.get('/orders', isAdminAuthenticated, async (req, res) => {
   }
 });
 
+// View Orders route
+router.get('/orders/:id', isAdminAuthenticated, async (req, res) => {
+  try {
+    const orders = await Order.findById(req.params.id)
+      .populate('userId');
+    // Calculate subtotal for each item
+    const itemsWithSubtotal = orders.items.map(item => ({
+      ...item.toObject(),
+      subtotal: item.price * item.quantity
+    }));
+    res.render('admin/view-order', { orders: { ...orders.toObject(), items: itemsWithSubtotal } });
+  } catch (error) {
+    res.status(500).send('Error loading orders');
+  }
+});
+
+//Order Status Management
+router.post("/orders/update-status/:id", isAdminAuthenticated, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    order.status = status;
+    await order.save();
+    res.json({ success: true, order });
+  }catch (error) {
+    console.error("Error during order update:", error);
+    res.status(500).send("Error updating order status");
+  }
+
+  });
+
 // SubOrders route
 router.get('/suborders', isAdminAuthenticated, async (req, res) => {
   try {
@@ -86,7 +118,8 @@ router.get('/suborders', isAdminAuthenticated, async (req, res) => {
     
     const formattedSuborders = suborders.map(order => ({
       ...order.toObject(),
-      isDelayed: order.isDelayed()
+      isDelayed: order.isDelayed(),
+      mainOrderId: order.mainOrderId._id.toString()
     }));
 
     res.render('admin/suborders', { suborders: formattedSuborders });
@@ -94,6 +127,22 @@ router.get('/suborders', isAdminAuthenticated, async (req, res) => {
     res.status(500).send('Error loading suborders');
   }
 });
+
+//Sub-Order Status Management
+router.post("/suborders/update-status/:id", isAdminAuthenticated, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const subOrder = await SubOrder.findById(req.params.id);
+
+    subOrder.adminShippingStatus = status;
+    await subOrder.save();
+    res.json({ success: true, subOrder });
+  }catch (error) {
+    console.error("Error during order update:", error);
+    res.status(500).send("Error updating order status");
+  }
+
+  });
 
 // Sellers route
 router.get('/sellers', isAdminAuthenticated, async (req, res) => {

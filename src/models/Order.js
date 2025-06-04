@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
@@ -27,8 +26,11 @@ const orderSchema = new mongoose.Schema({
     required: true
   },
   shippingAddress: {
-    type: String,
-    required: true
+    country: { type: String, required: true },
+    state: { type: String, required: true },
+    city: { type: String, required: true },
+    address: { type: String, required: true },
+    pincode: { type: String, required: true }
   },
   status: {
     type: String,
@@ -38,7 +40,16 @@ const orderSchema = new mongoose.Schema({
   orderedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['cod', 'online'],
+    required: true
+  },
+  paymentId: {
+    type: String,
+    required: false
+  },
 });
 
 module.exports = mongoose.model('Order', orderSchema);
