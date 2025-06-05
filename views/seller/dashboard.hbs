@@ -43,7 +43,22 @@
                         <div class="product-image">
                             <img src="{{this.imagePath}}" alt="{{this.productName}}">
                             <div class="product-actions">
-                                <button onclick="showEditProductForm('{{this._id}}', '{{this.productName}}', {{this.price}}, '{{this.description}}', '{{this.keyPoints}}', {{this.inventory}})">
+                                <button onclick="showEditProductForm(
+    '{{this._id}}',
+    '{{jsEscape this.productName}}',
+    {{this.price}},
+    '{{jsEscape this.description}}',
+    '{{jsEscape this.keyPoints}}',
+    {{this.inventory}},
+    {{#if this.width}}{{this.width}}{{else}}0{{/if}},
+    {{#if this.length}}{{this.length}}{{else}}0{{/if}},
+    {{#if this.height}}{{this.height}}{{else}}0{{/if}},
+    {{#if this.weight}}{{this.weight}}{{else}}0{{/if}},
+    {{#if this.isHandmade}}true{{else}}false{{/if}},
+    '{{jsEscape this.material}}',
+    '{{jsEscape this.otherSpecs}}',
+    '{{jsEscape this.careInstructions}}'
+)">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button onclick="deleteProduct('{{this._id}}')">
@@ -104,33 +119,125 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
             <h3 id="modalTitle">Add New Product</h3>
+            <p style="font-size:0.98em; color:#888; margin-bottom:10px;">Fields marked with <span style="color:#e75480;">*</span> are required.</p>
             <form id="productForm" action="/seller/products/add" method="POST" enctype="multipart/form-data">
                 <input type="hidden" id="productId" name="productId">
                 <div class="form-group">
-                    <label>Product Name</label>
+                    <label>Product Name <span style="color:#e75480;">*</span></label>
                     <input type="text" id="productName" name="productName" required>
                 </div>
+                <hr class="modal-separator">
+
                 <div class="form-group">
-                    <label>Price (₹)</label>
+                    <label>Price (₹) <span style="color:#e75480;">*</span></label>
                     <input type="number" id="price" name="price" required>
                 </div>
+                <hr class="modal-separator">
+
                 <div class="form-group">
-                    <label>Description</label>
-                    <input type="text" id="description" name="description" placeholder="Product Description" required>
+                    <label>Description <span style="color:#e75480;">*</span></label>
+                    <textarea id="description" name="description" rows="3" placeholder="Product Description" required style="resize:vertical;"></textarea>
                 </div>
+                <hr class="modal-separator">
+
                 <div class="form-group">
-                    <label>Available Quantity</label>
+                    <label>Available Quantity <span style="color:#e75480;">*</span></label>
                     <input type="number" id="inventory" name="inventory" placeholder="Available Quantity" required min="0">
                 </div>
+                <hr class="modal-separator">
+
                 <div class="form-group">
-                    <label>Key Points (comma-separated)</label>
+                    <label>Key Points (comma-separated) <span style="color:#e75480;">*</span></label>
                     <input type="text" id="keyPoints" name="keyPoints" required>
                 </div>
+                <hr class="modal-separator">
+
                 <div class="form-group">
-                    <label>Product Image</label>
-                    <input type="file" id="productImage" name="productImage" accept="image/*">
+                    <label>Product Images <span style="color:#e75480;">*</span></label>
+                    <div id="imageInputsContainer">
+                        <!-- Image inputs will be added here -->
+                    </div>
+                    <button type="button" id="addImageBtn" class="add-image-btn" style="margin-top:10px;">
+                        <i class="fas fa-plus"></i> Add Image
+                    </button>
                 </div>
-                <button type="submit" class="submit-btn">
+                <hr class="modal-separator">
+
+                <div class="form-group">
+                    <label>Product Videos</label>
+                    <div class="form-guidelines" style="font-size:0.95em; color:#888; margin-bottom:6px;">
+                        <ul style="margin:0 0 6px 18px; padding:0;">
+                            <li>Maximum 2 videos allowed</li>
+                            <li>Each video must be ≤ 30 seconds</li>
+                            <li>Only landscape videos are allowed</li>
+                        </ul>
+                    </div>
+                    <div id="videoInputsContainer">
+                        <!-- Video inputs will be added here -->
+                    </div>
+                    <button type="button" id="addVideoBtn" class="add-image-btn" style="margin-top:10px;">
+                        <i class="fas fa-plus"></i> Add Video
+                    </button>
+                </div>
+                <hr class="modal-separator">
+
+                <div class="form-group" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <div style="flex:1; min-width:120px;">
+                        <label>Width (inches) <span style="color:#e75480;">*</span></label>
+                        <input type="number" id="width" name="width" min="0" step="0.01" placeholder="Width" required>
+                    </div>
+                    <div style="flex:1; min-width:120px;">
+                        <label>Length (inches) <span style="color:#e75480;">*</span></label>
+                        <input type="number" id="length" name="length" min="0" step="0.01" placeholder="Length" required>
+                    </div>
+                    <div style="flex:1; min-width:120px;">
+                        <label>Height/Thickness (inches)</label>
+                        <input type="number" id="height" name="height" min="0" step="0.01" placeholder="Height/Thickness">
+                    </div>
+                    <div style="flex:1; min-width:120px;">
+                        <label>Weight (kg)</label>
+                        <input type="number" id="weight" name="weight" min="0" step="0.01" placeholder="Weight">
+                    </div>
+                </div>
+                <hr class="modal-separator">
+
+                <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 12px;">
+                    <input type="checkbox" id="isHandmade" name="isHandmade" style="width:18px; height:18px;" required>
+                    <label for="isHandmade" style="margin:0;">This product is handmade? <span style="color:#e75480;">*</span></label>
+                </div>
+                <hr class="modal-separator">
+
+                <div class="form-group">
+                    <label>Material <span style="color:#e75480;">*</span></label>
+                    <input type="text" id="material" name="material" placeholder="e.g. Wood, Resin, Cotton" required>
+                </div>
+                <hr class="modal-separator">
+
+                <div class="form-group">
+                    <label>Other Specifications</label>
+                    <textarea id="otherSpecs" name="otherSpecs" rows="2" placeholder="Any other product specifications (optional)" style="resize:vertical;"></textarea>
+                </div>
+                <hr class="modal-separator">
+
+                <div class="form-group">
+                    <label>Care Instructions</label>
+                    <textarea id="careInstructions" name="careInstructions" rows="2" placeholder="How to care for this product (optional)" style="resize:vertical;"></textarea>
+                </div>
+                <hr class="modal-separator">
+
+                <div class="form-group" style="margin-bottom: 0; display: flex; flex-direction: row;">
+                    <input type="checkbox" id="agreement1" name="agreement1" required style="width:18px; height:18px;">
+                    <label for="agreement1" style="display:inline;">
+                        I confirm that this product is real, and I agree to deliver it within 3 days of receiving the order. I understand that any type of cheating or malpractices will not be tolerated. <span style="color:#e75480;">*</span>
+                    </label>
+                </div>
+                <div class="form-group" style="margin-bottom: 0; display: flex; flex-direction: row;">
+                    <input type="checkbox" id="agreement2" name="agreement2" required style="width:18px; height:18px;">
+                    <label for="agreement2" style="display:inline;">
+                        I understand that Shilpp will sell these products with an incremental price to cover delivery and other required charges. <span style="color:#e75480;">*</span>
+                    </label>
+                </div>
+                <button type="submit" class="submit-btn" id="submitProductBtn" disabled>
                     <i class="fas fa-save"></i> Save Product
                 </button>
             </form>
@@ -138,6 +245,9 @@
     </div>
 
     <script>
+        // Set your size limit (in bytes)
+        const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30MB
+
         function showAddProductForm() {
             document.getElementById('modalTitle').textContent = 'Add New Product';
             document.getElementById('productForm').action = '/seller/products/add';
@@ -146,7 +256,22 @@
             document.getElementById('productModal').style.display = 'block';
         }
 
-        function showEditProductForm(id, name, price, description, keyPoints, inventory) {
+        function showEditProductForm(
+            id,
+            name,
+            price,
+            description,
+            keyPoints,
+            inventory,
+            width,
+            length,
+            height,
+            weight,
+            isHandmade,
+            material,
+            otherSpecs,
+            careInstructions
+        ) {
             document.getElementById('modalTitle').textContent = 'Edit Product';
             document.getElementById('productForm').action = `/seller/products/update/${id}`;
             document.getElementById('productId').value = id;
@@ -155,6 +280,20 @@
             document.getElementById('description').value = description;
             document.getElementById('keyPoints').value = keyPoints;
             document.getElementById('inventory').value = inventory;
+            document.getElementById('width').value = width || '';
+            document.getElementById('length').value = length || '';
+            document.getElementById('height').value = height || '';
+            document.getElementById('weight').value = weight || '';
+            document.getElementById('material').value = material || '';
+            document.getElementById('otherSpecs').value = otherSpecs || '';
+            document.getElementById('careInstructions').value = careInstructions || '';
+            document.getElementById('isHandmade').checked = !!isHandmade;
+
+            // Agreements must be checked to enable submit
+            document.getElementById('agreement1').checked = false;
+            document.getElementById('agreement2').checked = false;
+            document.getElementById('submitProductBtn').disabled = true;
+
             document.getElementById('productModal').style.display = 'block';
         }
 
@@ -201,17 +340,210 @@
             }
         }
 
-          function validateImage(input) {
-            const file = input.files[0];
-            if (!file) return;
+        // Add multiple image input fields dynamically
+        document.addEventListener('DOMContentLoaded', function() {
+            const imageInputsContainer = document.getElementById('imageInputsContainer');
+            const addImageBtn = document.getElementById('addImageBtn');
 
-            const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            function createImageInput() {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'image-input-wrapper';
+                wrapper.style.display = 'flex';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.gap = '8px';
+                wrapper.style.marginBottom = '8px';
 
-            if (!validImageTypes.includes(file.type)) {
-              alert("Please upload a valid image file (jpg, png, gif, or webp).");
-              input.value = ""; // Clear the input
+                // Error message element
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'input-error';
+                errorDiv.style.color = '#e75480';
+                errorDiv.style.fontSize = '0.95em';
+                errorDiv.style.marginBottom = '2px';
+                errorDiv.style.flexBasis = '100%';
+
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.name = 'productImages';
+                input.accept = 'image/*';
+                input.required = imageInputsContainer.childElementCount === 0; // Only first is required
+
+                input.onchange = function() {
+                    errorDiv.textContent = '';
+                    const file = input.files[0];
+                    if (!file) return;
+
+                    if (file.size > MAX_FILE_SIZE) {
+                        errorDiv.textContent = "Image file size must be less than 30MB.";
+                        input.value = "";
+                        return;
+                    }
+                    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!validImageTypes.includes(file.type)) {
+                        errorDiv.textContent = "Please upload a valid image file (jpg, png, gif, or webp).";
+                        input.value = "";
+                    }
+                };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'delete-image-btn';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.style.background = 'none';
+                deleteBtn.style.border = 'none';
+                deleteBtn.style.color = '#e75480';
+                deleteBtn.style.cursor = 'pointer';
+                deleteBtn.style.fontSize = '1.2rem';
+
+                deleteBtn.onclick = function() {
+                    wrapper.remove();
+                    // Ensure at least one input is required
+                    if (imageInputsContainer.childElementCount > 0) {
+                        imageInputsContainer.firstElementChild.querySelector('input[type="file"]').required = true;
+                    }
+                };
+
+                // Append errorDiv before input
+                wrapper.appendChild(errorDiv);
+                wrapper.appendChild(input);
+                wrapper.appendChild(deleteBtn);
+                return wrapper;
             }
-          }
+
+            addImageBtn.onclick = function() {
+                imageInputsContainer.appendChild(createImageInput());
+                // Only the first input is required
+                Array.from(imageInputsContainer.children).forEach((child, idx) => {
+                    child.querySelector('input[type="file"]').required = idx === 0;
+                });
+            };
+
+            // Add one image input by default
+            imageInputsContainer.appendChild(createImageInput());
+        });
+
+        // Add multiple video input fields dynamically
+        document.addEventListener('DOMContentLoaded', function() {
+            const videoInputsContainer = document.getElementById('videoInputsContainer');
+            const addVideoBtn = document.getElementById('addVideoBtn');
+
+            function createVideoInput() {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'video-input-wrapper';
+                wrapper.style.display = 'flex';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.gap = '8px';
+                wrapper.style.marginBottom = '8px';
+
+                // Error message element
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'input-error';
+                errorDiv.style.color = '#e75480';
+                errorDiv.style.fontSize = '0.95em';
+                errorDiv.style.marginBottom = '2px';
+                errorDiv.style.flexBasis = '100%';
+
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.name = 'productVideos';
+                input.accept = 'video/*';
+
+                input.onchange = function() {
+                    errorDiv.textContent = '';
+                    const file = input.files[0];
+                    if (!file) return;
+
+                    if (file.size > MAX_FILE_SIZE) {
+                        errorDiv.textContent = "Video file size must be less than 30MB.";
+                        input.value = "";
+                        return;
+                    }
+
+                    if (!file.type.startsWith('video/')) {
+                        errorDiv.textContent = "Please upload a valid video file.";
+                        input.value = "";
+                        return;
+                    }
+
+                    // Check duration and landscape
+                    const url = URL.createObjectURL(file);
+                    const video = document.createElement('video');
+                    video.preload = 'metadata';
+                    video.src = url;
+                    video.onloadedmetadata = function() {
+                        URL.revokeObjectURL(url);
+                        if (video.duration > 30) {
+                            errorDiv.textContent = "Video must be 30 seconds or less.";
+                            input.value = "";
+                            return;
+                        }
+                        if (video.videoWidth < video.videoHeight) {
+                            errorDiv.textContent = "Only landscape videos are allowed.";
+                            input.value = "";
+                            return;
+                        }
+                    };
+                };
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'delete-video-btn';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.style.background = 'none';
+                deleteBtn.style.border = 'none';
+                deleteBtn.style.color = '#e75480';
+                deleteBtn.style.cursor = 'pointer';
+                deleteBtn.style.fontSize = '1.2rem';
+
+                deleteBtn.onclick = function() {
+                    wrapper.remove();
+                    if (videoInputsContainer.childElementCount < 2) {
+                        addVideoBtn.disabled = false;
+                    }
+                };
+
+                // Append errorDiv before input
+                wrapper.appendChild(errorDiv);
+                wrapper.appendChild(input);
+                wrapper.appendChild(deleteBtn);
+                return wrapper;
+            }
+
+            addVideoBtn.onclick = function() {
+                if (videoInputsContainer.childElementCount < 2) {
+                    videoInputsContainer.appendChild(createVideoInput());
+                }
+                if (videoInputsContainer.childElementCount >= 2) {
+                    addVideoBtn.disabled = true;
+                }
+            };
+
+            // Add one video input by default (optional, or leave empty)
+            // videoInputsContainer.appendChild(createVideoInput());
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enable submit only if both agreements are checked
+            const agreement1 = document.getElementById('agreement1');
+            const agreement2 = document.getElementById('agreement2');
+            const submitBtn = document.getElementById('submitProductBtn');
+
+            function toggleSubmitBtn() {
+                submitBtn.disabled = !(agreement1.checked && agreement2.checked);
+            }
+
+            agreement1.addEventListener('change', toggleSubmitBtn);
+            agreement2.addEventListener('change', toggleSubmitBtn);
+
+            // On modal open, reset submit button state
+            window.showAddProductForm = function() {
+                document.getElementById('modalTitle').textContent = 'Add New Product';
+                document.getElementById('productForm').action = '/seller/products/add';
+                document.getElementById('productId').value = '';
+                document.getElementById('productForm').reset();
+                submitBtn.disabled = true;
+                document.getElementById('productModal').style.display = 'block';
+            };
+        });
     </script>
 </body>
 </html>

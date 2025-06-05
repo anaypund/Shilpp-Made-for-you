@@ -23,7 +23,7 @@
             <i class="fas fa-bell"></i>
             <i class="fas fa-search" onclick="toggleSearchBox()"></i>
             {{#if user}}
-                <a href="/profile" class="user-greeting">Hello, {{user.name}}</a>
+                <a href="/profile" class="user-greeting">Hello, {{split user.name " " 0}}</a>
                 <a href="/logout" class="auth-link"><i class="fas fa-sign-out-alt"></i></a>
             {{else}}
                 <a href="/login" class="auth-link"><i class="fas fa-user"></i> Login</a>

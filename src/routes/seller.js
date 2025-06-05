@@ -20,11 +20,22 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10000000 }, // 10MB limit
+  limits: { fileSize: 30000000 }, // 30MB per file
   fileFilter: function (req, file, cb) {
-    checkFileType(file, cb);
+    // Accept images and videos
+    const filetypes = /jpeg|jpg|png|gif|webp|mp4|mov|avi|mkv/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb("Error: Images and Videos Only!");
+    }
   },
-}).single("productImage");
+}).fields([
+  { name: "productImages", maxCount: 10 },
+  { name: "productVideos", maxCount: 2 }
+]);
 
 // Serve static files from public directory
 router.use("/static", express.static("public"));
@@ -124,27 +135,46 @@ router.post(
   upload,
   async (req, res) => {
     try {
-      const { productName, price, description, keyPoints, inventory } = req.body;
+      const {
+        productName, price, description, keyPoints, inventory,
+        width, length, height, weight, isHandmade, material,
+        otherSpecs, careInstructions
+      } = req.body;
       const seller = await Seller.findById(req.session.sellerId);
+
+      // Handle images and videos
+      const images = (req.files['productImages'] || []).map(f => "/static/images/" + f.filename);
+      const videos = (req.files['productVideos'] || []).map(f => "/static/images/" + f.filename);
 
       const product = new Product({
         productName,
         price: Number(price),
-        imagePath: "/static/images/" + req.file.filename,
+        imagePath: images[0] || '', // For backward compatibility
+        productImages: images,
+        productVideos: videos,
         sellerName: seller.shopName,
         sellerID: seller._id,
         description,
         keyPoints: keyPoints.split(",").map((point) => point.trim()),
         keyWords: productName.toLowerCase().split(" "),
         inventory: Number(inventory) || 0,
+        width: Number(width),
+        length: Number(length),
+        height: height ? Number(height) : undefined,
+        weight: weight ? Number(weight) : undefined,
+        isHandmade: isHandmade === "on" || isHandmade === "true" || isHandmade === true,
+        material,
+        otherSpecs,
+        careInstructions
       });
 
       await product.save();
       res.redirect("/seller/dashboard");
     } catch (error) {
+      console.error(error);
       res.status(500).send("Error adding product");
     }
-  },
+  }
 );
 
 router.post(
@@ -153,25 +183,44 @@ router.post(
   upload,
   async (req, res) => {
     try {
-      const { productName, inventory, price, description, keyPoints } = req.body;
+      const {
+        productName, inventory, price, description, keyPoints,
+        width, length, height, weight, isHandmade, material,
+        otherSpecs, careInstructions
+      } = req.body;
+
       const updateData = {
         productName,
         price: Number(price),
         description,
-        inventory,
+        inventory: Number(inventory) || 0,
         keyPoints: keyPoints.split(",").map((point) => point.trim()),
+        width: Number(width),
+        length: Number(length),
+        height: height ? Number(height) : undefined,
+        weight: weight ? Number(weight) : undefined,
+        isHandmade: isHandmade === "on" || isHandmade === "true" || isHandmade === true,
+        material,
+        otherSpecs,
+        careInstructions
       };
 
-      if (req.file) {
-        updateData.imagePath = "/static/images/" + req.file.filename;
+      // Handle new uploads
+      if (req.files && req.files['productImages'] && req.files['productImages'].length > 0) {
+        updateData.productImages = req.files['productImages'].map(f => "/static/images/" + f.filename);
+        updateData.imagePath = updateData.productImages[0];
+      }
+      if (req.files && req.files['productVideos'] && req.files['productVideos'].length > 0) {
+        updateData.productVideos = req.files['productVideos'].map(f => "/static/images/" + f.filename);
       }
 
       await Product.findByIdAndUpdate(req.params.id, updateData);
       res.redirect("/seller/dashboard");
     } catch (error) {
+      console.error(error);
       res.status(500).send("Error updating product");
     }
-  },
+  }
 );
 
 // Delete product route
@@ -242,24 +291,6 @@ router.post(
   }
 );
 
-// Get seller's suborders with status and deadline
-router.get("/suborders", isSellerAuthenticated, async (req, res) => {
-  try {
-    const subOrders = await SubOrder.find({ 
-      sellerId: req.session.sellerId 
-    })
-    .populate("mainOrderId")
-    .sort({ createdAt: -1 });
 
-    const formattedOrders = subOrders.map(order => ({
-      ...order.toObject(),
-      isDelayed: order.isDelayed()
-    }));
-
-    res.json(formattedOrders);
-  } catch (error) {
-    res.status(500).send("Error fetching suborders");
-  }
-});
 
 module.exports = router;

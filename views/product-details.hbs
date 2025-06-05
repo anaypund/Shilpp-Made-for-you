@@ -20,54 +20,82 @@
     {{#each product}}
     <div class="container">
     <div class="product-container">
-        <!-- Carousel Section -->
-        <div class="carousel-container">
-            <div class="carousel-image-wrapper">
-                <img src="{{this.imagePath}}" class="carousel-image active" alt="Product Image 1">
-                <img src="/static/images/Handmade Resin Bracelets - Blue.png" class="carousel-image" alt="Product Image 2">
-                <img src="{{this.imagePath}}" class="carousel-image" alt="Product Image 3">
-                <img src="/static/images/Handmade Resin Bracelets - Yellow.png" class="carousel-image" alt="Product Image 2">
+        <!-- Row: Carousel + Details -->
+        <div class="product-main-row">
+            <div class="carousel-container">
+                <div class="carousel-image-wrapper">
+                    {{#each this.productImages}}
+                        <img src="{{this}}" class="carousel-image{{#if @first}} active{{/if}}" alt="Product Image">
+                    {{/each}}
+                </div>
+                <div class="carousel-controls">
+                    <i class="fas fa-chevron-left" id="prevBtn"></i>
+                    <div class="carousel-thumbnails"></div>
+                    <i class="fas fa-chevron-right" id="nextBtn"></i>
+                </div>
             </div>
-            <div class="carousel-controls">
-                <i class="fas fa-chevron-left" id="prevBtn"></i>
-                <div class="carousel-thumbnails"></div>
-                <i class="fas fa-chevron-right" id="nextBtn"></i>
+            <div class="product-details">
+                <h1>{{this.productName}}</h1>
+                <div class="price">
+                    <span class="discounted-price">&#8377;{{this.price}}</span>
+                </div>
+                {{#if (eq this.inventory 0)}}
+                    <button class="add-to-cart out-of-stock" disabled>Out of Stock</button>
+                {{else}}
+                    <form action="/cart" method="POST">
+                        <input type="hidden" name="id" value="{{this._id}}">
+                        <button class="add-to-cart" onclick="openPopup()" type="submit">Add to Cart</button>
+                        <button id="share-btn" class="add-to-cart" style="margin-top: 20px;">Share</button>
+                    </form>
+                    <div class="inventory-status">In Stock: {{this.inventory}} items</div>
+                {{/if}}
+                <div class="description" style="margin: 16px 0;">
+                    <strong>Description:</strong><br>
+                    {{this.description}}
+                </div>
             </div>
         </div>
-
-        <!-- Product Details Section -->
-        <div class="product-details">
-            <h1>{{this.productName}}</h1>
-            <!-- <div class="review-stars">
-                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
-            </div> -->
-            Get it now at just
-            <div class="price">
-                <span class="discounted-price">&#8377;{{this.price}}</span> <text>1500</text>
+        <!-- Column: Videos + Specs -->
+        <div class="product-side-column">
+            {{#if this.productVideos.length}}
+            <div class="product-videos-full">
+                {{#each this.productVideos}}
+                    <video src="{{this}}" controls style="width:100%;max-width:900px;display:block;margin:0 auto 18px auto;border-radius:10px;background:#eee;"></video>
+                {{/each}}
             </div>
-            {{#if (eq this.inventory 0)}}
-                <button class="add-to-cart out-of-stock" disabled>Out of Stock</button>
-            {{else}}
-                <form action="/cart" method="POST">
-                <input type="hidden" name="id" value="{{this._id}}">
-                <button class="add-to-cart" onclick="openPopup()" type="submit">Add to Cart</button>
-                </form>
-                <div class="inventory-status">In Stock: {{this.inventory}} items</div>
             {{/if}}
-
-            <div class="description">
-                {{this.description}}
+            <div class="product-specs-table" style="max-width:600px;margin:0 auto 32px auto;">
+                <h2 style="font-size:1.15em;margin-bottom:10px;color:#e75480;">Product Specifications</h2>
+                <table style="width:100%;border-collapse:collapse;background:#fafafa;">
+                    <tbody>
+                        {{#each this.keyPoints}}
+                            <tr>
+                                <td style="padding:7px 10px;color:#555;">&#8226; {{this}}</td>
+                                <td></td>
+                            </tr>
+                        {{/each}}
+                        <tr><td style="padding:7px 10px;">Seller</td><td style="padding:7px 10px;">{{../this.sellerName}}</td></tr>
+                        <tr><td style="padding:7px 10px;">Material</td><td style="padding:7px 10px;">{{../this.material}}</td></tr>
+                        <tr><td style="padding:7px 10px;">Handmade</td><td style="padding:7px 10px;">{{#if ../this.isHandmade}}Yes{{else}}No{{/if}}</td></tr>
+                        <tr>
+                            <td style="padding:7px 10px;">Dimensions (inches)</td>
+                            <td style="padding:7px 10px;">
+                                {{../this.width}}W × {{../this.length}}L
+                                {{#if ../this.height}} × {{../this.height}}H{{/if}}
+                            </td>
+                        </tr>
+                        {{#if ../this.weight}}
+                            <tr><td style="padding:7px 10px;">Weight</td><td style="padding:7px 10px;">{{../this.weight}} kg</td></tr>
+                        {{/if}}
+                        {{#if ../this.otherSpecs}}
+                            <tr><td style="padding:7px 10px;">Other Specifications</td><td style="padding:7px 10px;">{{../this.otherSpecs}}</td></tr>
+                        {{/if}}
+                        {{#if ../this.careInstructions}}
+                            <tr><td style="padding:7px 10px;">Care Instructions</td><td style="padding:7px 10px;">{{../this.careInstructions}}</td></tr>
+                        {{/if}}
+                    </tbody>
+                </table>
             </div>
-            <div class="product-specs">
-                <h2>Product Specifications</h2>
-                <ul>
-                    {{#each keyPoints}}
-                    <li>{{@this}}</li>
-                    {{/each}}
-                    <li>{{this.sellerName}}</li>
-                </ul>
-            </div>
-            <button id="share-btn" class="add-to-cart" style="margin-top: 20px;">Share</button>
         </div>
     </div>
 </div>
@@ -115,68 +143,66 @@
 });
 
 
-    const images = document.querySelectorAll('.carousel-image');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const thumbnailsContainer = document.querySelector('.carousel-thumbnails');
-    let currentIndex = 0;
+    document.addEventListener('DOMContentLoaded', function() {
+        const images = document.querySelectorAll('.carousel-image');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const thumbnailsContainer = document.querySelector('.carousel-thumbnails');
+        let currentIndex = 0;
 
-    // Helper to get image src by index (with wrap-around)
-    function getImageSrc(idx) {
-        const n = images.length;
-        return images[(idx + n) % n].src;
-    }
+        function getImageSrc(idx) {
+            const n = images.length;
+            return images[(idx + n) % n].src;
+        }
 
-    function updateThumbnails() {
-        const n = images.length;
-        const prevIdx = (currentIndex - 1 + n) % n;
-        const nextIdx = (currentIndex + 1) % n;
+        function updateThumbnails() {
+            const n = images.length;
+            const prevIdx = (currentIndex - 1 + n) % n;
+            const nextIdx = (currentIndex + 1) % n;
 
-        thumbnailsContainer.innerHTML = `
-            <img src="${getImageSrc(prevIdx)}" class="carousel-thumb thumb-left" alt="Prev Image">
-            <img src="${getImageSrc(currentIndex)}" class="carousel-thumb thumb-center" alt="Current Image">
-            <img src="${getImageSrc(nextIdx)}" class="carousel-thumb thumb-right" alt="Next Image">
-        `;
+            thumbnailsContainer.innerHTML = `
+                <img src="${getImageSrc(prevIdx)}" class="carousel-thumb thumb-left" alt="Prev Image">
+                <img src="${getImageSrc(currentIndex)}" class="carousel-thumb thumb-center" alt="Current Image">
+                <img src="${getImageSrc(nextIdx)}" class="carousel-thumb thumb-right" alt="Next Image">
+            `;
 
-        // Optional: clicking a thumb jumps to that image
-        thumbnailsContainer.querySelector('.thumb-left').onclick = () => {
-            currentIndex = prevIdx;
+            thumbnailsContainer.querySelector('.thumb-left').onclick = () => {
+                currentIndex = prevIdx;
+                showImage(currentIndex);
+            };
+            thumbnailsContainer.querySelector('.thumb-center').onclick = () => {};
+            thumbnailsContainer.querySelector('.thumb-right').onclick = () => {
+                currentIndex = nextIdx;
+                showImage(currentIndex);
+            };
+        }
+
+        function showImage(index) {
+            images.forEach((img, i) => {
+                img.classList.toggle('active', i === index);
+            });
+            updateThumbnails();
+        }
+
+        if (images.length && prevBtn && nextBtn && thumbnailsContainer) {
+            prevBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex - 1 + images.length) % images.length;
+                showImage(currentIndex);
+            });
+
+            nextBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex + 1) % images.length;
+                showImage(currentIndex);
+            });
+
+            setInterval(() => {
+                currentIndex = (currentIndex + 1) % images.length;
+                showImage(currentIndex);
+            }, 5000);
+
             showImage(currentIndex);
-        };
-        thumbnailsContainer.querySelector('.thumb-center').onclick = () => {
-            // Do nothing or open modal
-        };
-        thumbnailsContainer.querySelector('.thumb-right').onclick = () => {
-            currentIndex = nextIdx;
-            showImage(currentIndex);
-        };
-    }
-
-    function showImage(index) {
-        images.forEach((img, i) => {
-            img.classList.toggle('active', i === index);
-        });
-        updateThumbnails();
-    }
-
-    prevBtn.addEventListener('click', () => {
-        currentIndex = (currentIndex - 1 + images.length) % images.length;
-        showImage(currentIndex);
+        }
     });
-
-    nextBtn.addEventListener('click', () => {
-        currentIndex = (currentIndex + 1) % images.length;
-        showImage(currentIndex);
-    });
-
-    // Auto-slide every 5 seconds
-    setInterval(() => {
-        currentIndex = (currentIndex + 1) % images.length;
-        showImage(currentIndex);
-    }, 5000);
-
-    // Initialize on page load
-    showImage(currentIndex);
 </script>
 
 </body>

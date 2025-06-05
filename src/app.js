@@ -36,6 +36,19 @@ hbs.registerHelper('formatDate', function(date, format) {
         hour12: true
     });
 });
+hbs.registerHelper('split', function(str, delimiter, index) {
+  if (!str) return '';
+  return str.split(delimiter)[index] || '';
+});
+hbs.registerHelper('jsEscape', function(str) {
+    if (str === undefined || str === null) return '';
+    str = String(str);
+    return str
+        .replace(/\\/g, '\\\\')   // Escape backslashes FIRST
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\r?\n/g, '\\n');
+});
 mongoose.set('strictQuery', false);
 
 // const securePassword = async(password)=>{

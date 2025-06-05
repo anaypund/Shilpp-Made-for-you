@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
 const productSchema = mongoose.Schema({
-    productName:{
+    productName: {
         type: String,
         required: true,
     },
-    price:{
+    price: {
         type: Number,
         required: true,
     },
@@ -26,11 +26,11 @@ const productSchema = mongoose.Schema({
         required: true,
     },
     keyPoints: {
-        type: Array,
+        type: [String],
         required: true,
     },
     keyWords: {
-        type: Array,
+        type: [String],
         required: true,
     },
     inventory: {
@@ -38,8 +38,46 @@ const productSchema = mongoose.Schema({
         required: true,
         default: 0
     },
-})
+    width: {
+        type: Number,
+        required: true,
+    },
+    length: {
+        type: Number,
+        required: true,
+    },
+    height: {
+        type: Number,
+        required: false,
+    },
+    weight: {
+        type: Number,
+        required: false,
+    },
+    isHandmade: {
+        type: Boolean,
+        required: true,
+    },
+    material: {
+        type: String,
+        required: true,
+    },
+    otherSpecs: {
+        type: String,
+        required: false,
+    },
+    careInstructions: {
+        type: String,
+        required: false,
+    },
+    productImages: {
+        type: [String], // Array of image file paths/URLs
+        required: true,
+    },
+    productVideos: {
+        type: [String], // Array of video file paths/URLs
+        required: false,
+    }
+});
 
-
-
-module.exports = mongoose.model('productSchema', productSchema)
+module.exports = mongoose.model('productSchema', productSchema);
