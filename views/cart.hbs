@@ -22,6 +22,7 @@
   <h1>Your Cart</h1>
   </div>
   <div class="cart-container">
+    {{#if cartItems.length}}
     <ul>
       {{#each cartItems}}
         <li class="cart-item">
@@ -31,27 +32,49 @@
             <p>Price: ₹{{this.productId.price}}</p>
             <p>Quantity: {{this.quantity}}</p>
           </div>
-          <form action="/cart/update" method="POST" class="update-form">
+          <form action="/cart/update" method="POST" class="update-form" style="display: flex; align-items: center; gap: 8px;">
             <input type="hidden" name="productId" value="{{this.productId._id}}">
-            <input type="number" name="quantity" value="{{this.quantity}}" min="0">
-            <button type="submit">Update</button>
+            <button type="button" class="quantity-btn up" tabindex="-1" style="background:none; border:none; cursor:pointer;">
+              <i class="fas fa-chevron-up"></i>
+            </button>
+            
+            <input 
+              type="number" 
+              name="quantity" 
+              value="{{this.quantity}}" 
+              min="0" 
+              style="width: 50px; text-align: center;"
+              class="quantity-input"
+              autocomplete="off"
+            >
+            <button type="button" class="quantity-btn down" tabindex="-1" style="background:none; border:none; cursor:pointer;">
+              <i class="fas fa-chevron-down"></i>
+            </button>
           </form>
         </li>
       {{/each}}
     </ul>
-  </div>
 
     <div class="total-section">
-    <form action="/checkout/shipping-info" method="GET">
+      <form action="/checkout/shipping-info" class="cart-submit" method="GET">
         <input type="hidden" name="UserID" value="1">
-    <h2>Subtotal</h2>
-    <div class="total-breakdown">
-        <span>Subtotal</span>
-        <span>₹{{total}}</span>
+        <h2>Subtotal</h2>
+        <div class="total-breakdown">
+          <span>Subtotal</span>
+          <span>₹{{total}}</span>
+        </div>
+        <button type="submit" class="add-to-cart">Proceed to Checkout</button>
+      </form>
     </div>
-    <button type="submit" class="add-to-cart">Proceed to Checkout</button>
-    </form>
-</div>
+    {{else}}
+    <div class="no-orders" style="text-align:center; margin: 60px 0;">
+      <i class="fas fa-bag-shopping bag-shake" style="font-size: 5rem; color: #e75480; margin-bottom: 20px;"></i>
+      <h2>Your bag feels a bit empty!</h2>
+      <p>Let’s add something awesome and fill it with creativity.</p>
+      <a href="/#productContainer" class="shop-now-btn" style="margin-top: 20px; display: inline-block;">Shop Now</a>
+    </div>
+    {{/if}}
+  </div>
 
   <!-- Footer -->
     <footer class="footer">
@@ -61,5 +84,31 @@
                 class="fab fa-twitter"></i></div>
     </footer>
 
+    <script>
+document.querySelectorAll('.update-form').forEach(form => {
+  const input = form.querySelector('.quantity-input');
+  const upBtn = form.querySelector('.quantity-btn.up');
+  const downBtn = form.querySelector('.quantity-btn.down');
+
+  // Submit form on input change
+  input.addEventListener('change', () => {
+    form.submit();
+  });
+
+  // Up arrow increases quantity
+  upBtn.addEventListener('click', () => {
+    input.value = parseInt(input.value) + 1;
+    form.submit();
+  });
+
+  // Down arrow decreases quantity (not below 0)
+  downBtn.addEventListener('click', () => {
+    if (parseInt(input.value) > 0) {
+      input.value = parseInt(input.value) - 1;
+      form.submit();
+    }
+  });
+});
+</script>
 </body>
 </html>

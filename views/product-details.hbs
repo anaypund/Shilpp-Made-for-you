@@ -22,14 +22,17 @@
     <div class="product-container">
         <!-- Carousel Section -->
         <div class="carousel-container">
-            <img src="{{this.imagePath}}" class="carousel-image active" alt="Product Image 1">
-            <img src="{{this.imagePath}}" class="carousel-image" alt="Product Image 2">
-            <img src="{{this.imagePath}}" class="carousel-image" alt="Product Image 3">
-            <div class="carousel-controls">
-                <!-- <i class="fas fa-chevron-left" id="prevBtn"></i>
-                <i class="fas fa-chevron-right" id="nextBtn"></i> -->
+            <div class="carousel-image-wrapper">
+                <img src="{{this.imagePath}}" class="carousel-image active" alt="Product Image 1">
+                <img src="/static/images/Handmade Resin Bracelets - Blue.png" class="carousel-image" alt="Product Image 2">
+                <img src="{{this.imagePath}}" class="carousel-image" alt="Product Image 3">
+                <img src="/static/images/Handmade Resin Bracelets - Yellow.png" class="carousel-image" alt="Product Image 2">
             </div>
-            
+            <div class="carousel-controls">
+                <i class="fas fa-chevron-left" id="prevBtn"></i>
+                <div class="carousel-thumbnails"></div>
+                <i class="fas fa-chevron-right" id="nextBtn"></i>
+            </div>
         </div>
 
         <!-- Product Details Section -->
@@ -115,12 +118,45 @@
     const images = document.querySelectorAll('.carousel-image');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
+    const thumbnailsContainer = document.querySelector('.carousel-thumbnails');
     let currentIndex = 0;
+
+    // Helper to get image src by index (with wrap-around)
+    function getImageSrc(idx) {
+        const n = images.length;
+        return images[(idx + n) % n].src;
+    }
+
+    function updateThumbnails() {
+        const n = images.length;
+        const prevIdx = (currentIndex - 1 + n) % n;
+        const nextIdx = (currentIndex + 1) % n;
+
+        thumbnailsContainer.innerHTML = `
+            <img src="${getImageSrc(prevIdx)}" class="carousel-thumb thumb-left" alt="Prev Image">
+            <img src="${getImageSrc(currentIndex)}" class="carousel-thumb thumb-center" alt="Current Image">
+            <img src="${getImageSrc(nextIdx)}" class="carousel-thumb thumb-right" alt="Next Image">
+        `;
+
+        // Optional: clicking a thumb jumps to that image
+        thumbnailsContainer.querySelector('.thumb-left').onclick = () => {
+            currentIndex = prevIdx;
+            showImage(currentIndex);
+        };
+        thumbnailsContainer.querySelector('.thumb-center').onclick = () => {
+            // Do nothing or open modal
+        };
+        thumbnailsContainer.querySelector('.thumb-right').onclick = () => {
+            currentIndex = nextIdx;
+            showImage(currentIndex);
+        };
+    }
 
     function showImage(index) {
         images.forEach((img, i) => {
             img.classList.toggle('active', i === index);
         });
+        updateThumbnails();
     }
 
     prevBtn.addEventListener('click', () => {
@@ -138,6 +174,9 @@
         currentIndex = (currentIndex + 1) % images.length;
         showImage(currentIndex);
     }, 5000);
+
+    // Initialize on page load
+    showImage(currentIndex);
 </script>
 
 </body>
