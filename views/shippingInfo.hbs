@@ -1,21 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - SHiLPP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
+    {{> head }}
 <body>
-    <!-- Header with Search & Icons -->
-    <header class="header">
-        <a href="/"><h1>SHiLPP</h1></a>
-        <div class="header-icons">
-            <a href="/#productContainer"><i class="fas fa-home"></i></a>
-        </div>
-    </header>
+    {{> navbar }}
 
     <main>
         <div class="tabs" style="justify-content: center; display: flex;">
@@ -68,10 +55,7 @@
         </form>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; 2024 SHiLPP. All rights reserved.</p>
-    </footer>
+    {{> footer }}
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

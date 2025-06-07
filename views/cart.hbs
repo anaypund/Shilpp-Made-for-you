@@ -1,24 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Cart - Shilpp</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="/static/css/style.css">
-</head>
+    {{> head }}
 <body>
-  <!-- Header -->
-  <header class="header">
-        <a href="/"><h1>SHiLPP</h1></a>
-        <div class="header-icons">
-            <a href="/#productContainer"><i class="fas fa-home"></i></a>
-        </div>
-    </header>
+    {{> navbar }}
+    {{> tabs }}
 
   <!-- Main Cart Section -->
-  <div class="tabs" style="justify-content: center; display: flex;">
+  <div class="tabs" style="justify-content: center; display: flex; margin-top: 2px; background-color: #f8f8f8">
   <h1>Your Cart</h1>
   </div>
   <div class="cart-container">
@@ -77,12 +65,7 @@
   </div>
 
   <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-section">Contact Us: <br> 123 Handmade St, Artsy City</div>
-        <div class="footer-section">Email: hello@shilp.com</div>
-        <div class="footer-section">Follow Us: <i class="fab fa-facebook"></i> <i class="fab fa-instagram"></i> <i
-                class="fab fa-twitter"></i></div>
-    </footer>
+    {{> footer }}
 
     <script>
 document.querySelectorAll('.update-form').forEach(form => {

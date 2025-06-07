@@ -10,32 +10,38 @@
 </head>
 <body>
     <header class="header">
-        <a href="/"><h1>SHiLPP</h1></a>
+        <a href="/" class="header-logo">
+            <img src="/static/images/Logo1.png" alt="Shilp India"/>
+        </a>
         <div class="header-icons">
-            <span class="user-greeting">Welcome, {{seller.shopName}}</span>
-            <a href="/seller/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            {{!-- <span class="user-greeting">Welcome, {{seller.shopName}}</span> --}}
+            <a href="/seller/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
         </div>
     </header>
 
     <div class="seller-dashboard">
         <div class="dashboard-stats">
             <div class="stat-card">
-                <i class="fas fa-box"></i>
-                <h3>Total Products</h3>
-                <p>{{products.length}}</p>
+                <a href="#products-section">
+                    <i class="fas fa-box"></i>
+                    <h3>Total Products</h3>
+                    <p>{{products.length}}</p>
+                </a>
             </div>
             <div class="stat-card">
-                <i class="fas fa-shopping-cart"></i>
-                <h3>Total Orders</h3>
-                <p>{{orders.length}}</p>
+                <a href="#orders-section">
+                    <i class="fas fa-shopping-cart"></i>
+                    <h3>Total Orders</h3>
+                    <p>{{orders.length}}</p>
+            </a>
             </div>
+        </div>
             <button class="add-product-btn" onclick="showAddProductForm()">
                 <i class="fas fa-plus"></i> Add New Product
             </button>
-        </div>
 
         <div class="dashboard-content">
-            <div class="products-section">
+            <div class="products-section" id="products-section">
                 <h3><i class="fas fa-store"></i> Your Products</h3>
                 <div class="products-grid">
                     {{#each products}}
@@ -75,7 +81,7 @@
                 </div>
             </div>
 
-            <div class="orders-section">
+            <div class="orders-section" id="orders-section">
                 <h3><i class="fas fa-shopping-bag"></i> Recent Orders</h3>
                 <div class="orders-grid">
                     {{#each orders}}

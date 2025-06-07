@@ -1,22 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shilpp</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Caveat:wght@700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
+    {{> head }}
 <body>
-    <!-- Header with Search & Icons -->
-    <header class="header">
-        <a href="/"><h1>SHiLPP</h1></a>
-        <div class="header-icons">
-            <a href="/#productContainer"><i class="fas fa-home"></i></a>
-        </div>
-    </header>
+    {{> navbar }}
+    {{> tabs }}
+
+
     {{#each product}}
     <div class="container">
     <div class="product-container">
@@ -60,7 +49,20 @@
             {{#if this.productVideos.length}}
             <div class="product-videos-full">
                 {{#each this.productVideos}}
-                    <video src="{{this}}" controls style="width:100%;max-width:900px;display:block;margin:0 auto 18px auto;border-radius:10px;background:#eee;"></video>
+                    <div class="video-lazy-wrapper" style="position:relative;margin:0 auto 18px auto;">
+                        <img 
+                            src="/static/images/thumbnail.jpg" 
+                            data-video-src="{{this}}" 
+                            class="video-thumb" 
+                            style="width:100%;border-radius:10px;cursor:pointer;display:block;background:#eee;"
+                            alt="Product Video Thumbnail"
+                        >
+                        <span class="play-icon" style="
+                            position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                            font-size:64px;color:white;text-shadow:0 2px 8px rgba(0,0,0,0.5);pointer-events:none;">
+                            <i class="fas fa-play-circle"></i>
+                        </span>
+                    </div>
                 {{/each}}
             </div>
             {{/if}}
@@ -109,6 +111,8 @@
             <a href="/login" style="text-decoration: none; color: white;"><i class="fas fa-shopping-cart"></i></a>
         {{/if}}
     </div>
+
+    {{> footer }}
     
 <script>
     function openPopup() {
@@ -203,6 +207,26 @@
             showImage(currentIndex);
         }
     });
+
+    document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.video-thumb').forEach(function(thumb) {
+        thumb.addEventListener('click', function() {
+            const videoSrc = thumb.getAttribute('data-video-src');
+            const wrapper = thumb.parentElement;
+            // Create video element
+            const video = document.createElement('video');
+            video.src = videoSrc;
+            video.controls = true;
+            video.autoplay = true;
+            video.style.width = '100%';
+            video.style.borderRadius = '10px';
+            video.style.background = '#eee';
+            // Replace thumbnail and play icon with video
+            wrapper.innerHTML = '';
+            wrapper.appendChild(video);
+        });
+    });
+});
 </script>
 
 </body>
