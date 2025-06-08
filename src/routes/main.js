@@ -1,7 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const routes = express.Router();
-const Path = require("path");
 const { urlencoded } = require("body-parser");
 const bodyParser = require("body-parser");
 const { Console, log } = require("console");
@@ -12,6 +11,25 @@ const crypto = require("crypto"); // Added for HMAC
 const User = require("../models/User");
 const Order = require("../models/Order"); // Added Order model
 const Product = require("../models/products");
+
+const { Storage } = require('@google-cloud/storage');
+const path = require('path');
+
+// Auth using service account JSON key
+const storage = new Storage();
+
+const bucketName = 'shilp-media';
+
+async function uploadFile(localFilePath, destinationName) {
+  await storage.bucket(bucketName).upload(localFilePath, {
+    destination: destinationName,
+    metadata: {
+      cacheControl: 'public, max-age=31536000',
+    },
+  });
+  console.log(`Uploaded ${localFilePath} as ${destinationName}`);
+}
+
 
 routes.use(
     session({

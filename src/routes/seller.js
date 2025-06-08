@@ -5,7 +5,26 @@ const Product = require("../models/products");
 const Order = require("../models/Order");
 const SubOrder = require("../models/SubOrder");
 const multer = require("multer");
-const path = require("path");
+const stream = require("stream");
+
+// GCS Upload configuration
+const { Storage } = require('@google-cloud/storage');
+const path = require('path');
+
+// Auth using service account JSON key
+const gcstorage = new Storage();
+
+const bucketName = 'shilp-media';
+
+async function uploadFile(localFilePath, destinationName) {
+  await gcstorage.bucket(bucketName).upload(localFilePath, {
+    destination: destinationName,
+    metadata: {
+      cacheControl: 'public, max-age=31536000',
+    },
+  });
+  console.log(`Uploaded ${localFilePath} as ${destinationName}`);
+}
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
@@ -19,10 +38,9 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 30000000 }, // 30MB per file
   fileFilter: function (req, file, cb) {
-    // Accept images and videos
     const filetypes = /jpeg|jpg|png|gif|webp|mp4|mov|avi|mkv/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = filetypes.test(file.mimetype);
@@ -142,14 +160,28 @@ router.post(
       } = req.body;
       const seller = await Seller.findById(req.session.sellerId);
 
-      // Handle images and videos
-      const images = (req.files['productImages'] || []).map(f => "/static/images/" + f.filename);
-      const videos = (req.files['productVideos'] || []).map(f => "/static/images/" + f.filename);
+      // Upload images to GCS
+      const images = req.files['productImages']
+        ? await Promise.all(req.files['productImages'].map(async (file) => {
+            const ext = path.extname(file.originalname);
+            const gcsName = `images/${file.fieldname}-${Date.now()}-${Math.round(Math.random()*1e9)}${ext}`;
+            return await uploadBufferToGCS(file.buffer, gcsName, file.mimetype);
+          }))
+        : [];
+
+      // Upload videos to GCS
+      const videos = req.files['productVideos']
+        ? await Promise.all(req.files['productVideos'].map(async (file) => {
+            const ext = path.extname(file.originalname);
+            const gcsName = `videos/${file.fieldname}-${Date.now()}-${Math.round(Math.random()*1e9)}${ext}`;
+            return await uploadBufferToGCS(file.buffer, gcsName, file.mimetype);
+          }))
+        : [];
 
       const product = new Product({
         productName,
         price: Number(price),
-        imagePath: images[0] || '', // For backward compatibility
+        imagePath: images[0] || '',
         productImages: images,
         productVideos: videos,
         sellerName: seller.shopName,
@@ -207,11 +239,23 @@ router.post(
 
       // Handle new uploads
       if (req.files && req.files['productImages'] && req.files['productImages'].length > 0) {
-        updateData.productImages = req.files['productImages'].map(f => "/static/images/" + f.filename);
+        updateData.productImages = await Promise.all(
+          req.files['productImages'].map(async (file) => {
+            const ext = path.extname(file.originalname);
+            const gcsName = `images/${file.fieldname}-${Date.now()}-${Math.round(Math.random()*1e9)}${ext}`;
+            return await uploadBufferToGCS(file.buffer, gcsName, file.mimetype);
+          })
+        );
         updateData.imagePath = updateData.productImages[0];
       }
       if (req.files && req.files['productVideos'] && req.files['productVideos'].length > 0) {
-        updateData.productVideos = req.files['productVideos'].map(f => "/static/images/" + f.filename);
+        updateData.productVideos = await Promise.all(
+          req.files['productVideos'].map(async (file) => {
+            const ext = path.extname(file.originalname);
+            const gcsName = `videos/${file.fieldname}-${Date.now()}-${Math.round(Math.random()*1e9)}${ext}`;
+            return await uploadBufferToGCS(file.buffer, gcsName, file.mimetype);
+          })
+        );
       }
 
       await Product.findByIdAndUpdate(req.params.id, updateData);
@@ -291,6 +335,27 @@ router.post(
   }
 );
 
+// Define the uploadBufferToGCS function
+async function uploadBufferToGCS(buffer, destination, mimetype) {
+  return new Promise((resolve, reject) => {
+    const bucket = gcstorage.bucket(bucketName);
+    const file = bucket.file(destination);
+    const passthroughStream = new stream.PassThrough();
+    passthroughStream.end(buffer);
 
+    passthroughStream
+      .pipe(file.createWriteStream({
+        metadata: {
+          contentType: mimetype,
+          cacheControl: 'public, max-age=31536000',
+        },
+        resumable: false,
+      }))
+      .on('error', reject)
+      .on('finish', () => {
+        resolve(`https://storage.googleapis.com/${bucketName}/${destination}`);
+      });
+  });
+}
 
 module.exports = router;

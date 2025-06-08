@@ -300,6 +300,10 @@
             document.getElementById('agreement2').checked = false;
             document.getElementById('submitProductBtn').disabled = true;
 
+            // Make all image inputs NOT required when editing
+            const imageInputs = document.querySelectorAll('#imageInputsContainer input[type="file"]');
+            imageInputs.forEach(input => input.required = false);
+
             document.getElementById('productModal').style.display = 'block';
         }
 
