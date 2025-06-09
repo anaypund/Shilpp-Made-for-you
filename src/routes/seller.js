@@ -83,15 +83,60 @@ router.get("/login", (req, res) => {
   res.render("seller/login");
 });
 
+// Update multer fields for seller registration file uploads
+const sellerUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 30000000 },
+  fileFilter: function (req, file, cb) {
+    const filetypes = /jpeg|jpg|png|pdf/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb("Error: Images and PDFs Only!");
+    }
+  },
+}).fields([
+  { name: "personalIdProof", maxCount: 1 },
+  { name: "brandLogo", maxCount: 1 },
+  { name: "businessIdProof", maxCount: 1 }
+]);
+
 // Registration route
-router.post("/register", async (req, res) => {
+router.post("/register", sellerUpload, async (req, res) => {
   try {
-    const { name, email, password, shopName } = req.body;
+    const {
+      name, email, password, shopName, phoneNumber, altNumber,
+      country, state, city, address, pincode,
+      processTime, returnPolicy,
+      paymentType, upiId, bankName, accountNumber, ifsc, passbookName, branchLocation,
+      socialMedia, story, experience,
+      isBusinessRegistered
+    } = req.body;
 
     // Check if seller already exists
     const existingSeller = await Seller.findOne({ email });
     if (existingSeller) {
       return res.render("seller/login", { error: "Email already registered" });
+    }
+
+    // Upload files to GCS under "Seller DB"
+    async function uploadSellerFile(field) {
+      if (req.files && req.files[field] && req.files[field][0]) {
+        const file = req.files[field][0];
+        const ext = path.extname(file.originalname);
+        const gcsName = `Seller DB/${field}-${Date.now()}-${Math.round(Math.random()*1e9)}${ext}`;
+        return await uploadBufferToGCS(file.buffer, gcsName, file.mimetype);
+      }
+      return undefined;
+    }
+
+    const personalIdProof = await uploadSellerFile("personalIdProof");
+    const brandLogo = await uploadSellerFile("brandLogo");
+    let businessIdProof;
+    if (isBusinessRegistered === "yes") {
+      businessIdProof = await uploadSellerFile("businessIdProof");
     }
 
     // Create new seller
@@ -100,12 +145,36 @@ router.post("/register", async (req, res) => {
       email,
       password,
       shopName,
+      altNumber,
+      country,
+      state,
+      city,
+      address,
+      pincode,
+      processTime,
+      returnPolicy,
+      paymentType,
+      upiId: paymentType === "upi" ? upiId : undefined,
+      bankName: paymentType === "bank" ? bankName : undefined,
+      accountNumber: paymentType === "bank" ? accountNumber : undefined,
+      ifsc: paymentType === "bank" ? ifsc : undefined,
+      passbookName: paymentType === "bank" ? passbookName : undefined,
+      branchLocation: paymentType === "bank" ? branchLocation : undefined,
+      personalIdProof,
+      phoneNumber,
+      socialMedia,
+      brandLogo,
+      story,
+      experience,
+      isBusinessRegistered,
+      businessIdProof: isBusinessRegistered === "yes" ? businessIdProof : undefined
     });
 
     await seller.save();
     req.session.sellerId = seller._id;
     res.redirect("/seller/dashboard");
   } catch (error) {
+    console.error(error);
     res.render("seller/login", { error: "Error creating account" });
   }
 });

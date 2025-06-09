@@ -10,16 +10,19 @@
 </head>
 <body>
     <header class="header">
-        <a href="/" class="header-logo">
-            <img src="/static/images/Logo1.png" alt="Shilp India"/>
-        </a>
-        <div class="header-icons">
-            {{!-- <span class="user-greeting">Welcome, {{seller.shopName}}</span> --}}
-            <a href="/seller/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
-        </div>
+            <div class="header-row">
+                <a href="/" class="header-logo">
+                    <img src="/static/images/Logo1.png" alt="Shilp India"/>
+                </a>
+                <div class="header-icons">
+                        <span class="user-greeting">Welcome, {{split seller.name " " 0}}</span>
+                        <a href="/seller/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></a>
+                    </div>
+            </div>
     </header>
 
     <div class="seller-dashboard">
+        <h2>{{seller.shopName}} Dashboard</h2>
         <div class="dashboard-stats">
             <div class="stat-card">
                 <a href="#products-section">
@@ -208,8 +211,8 @@
                 <hr class="modal-separator">
 
                 <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 12px;">
-                    <input type="checkbox" id="isHandmade" name="isHandmade" style="width:18px; height:18px;" required>
-                    <label for="isHandmade" style="margin:0;">This product is handmade? <span style="color:#e75480;">*</span></label>
+                    <input type="checkbox" id="isHandmade" name="isHandmade" style="width:18px; height:18px;">
+                    <label for="isHandmade" style="margin:0;">This product is handmade?</label>
                 </div>
                 <hr class="modal-separator">
 

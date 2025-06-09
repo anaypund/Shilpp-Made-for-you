@@ -1,18 +1,21 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Portal - Shilpp</title>
+    <title>Seller Portal - Shilp India</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div class="auth-page">
-        <div class="auth-container">
+    <div class="seller-auth-wrapper">
+        <div class="seller-auth-form-section">
             <div class="auth-header">
-                <h2>Seller Portal</h2>
-                <p class="auth-subtitle">Login or register as a seller</p>
+            <h2 class="auth-heading animate-fadein">
+                Welcome to the Shilp India Seller Family!
+            </h2>
+            <p class="auth-subtitle animate-slidein">
+                Start your journey with us. <span class="required-note"><span class="red-star">*</span> Required fields</span>
+            </p>
             </div>
             {{#if error}}
             <div class="error">{{error}}</div>
@@ -23,10 +26,16 @@
                 <h3>Login</h3>
                 <form action="/seller/login" method="POST" class="auth-form">
                     <div class="form-group">
-                        <input type="email" name="email" placeholder="Email" required>
+                        <label>
+                            Email <span class="red-star">*</span>
+                            <input type="email" name="email" placeholder="Email" required>
+                        </label>
                     </div>
                     <div class="form-group">
-                        <input type="password" name="password" placeholder="Password" required>
+                        <label>
+                            Password <span class="red-star">*</span>
+                            <input type="password" name="password" placeholder="Password" required>
+                        </label>
                     </div>
                     <button type="submit" class="auth-button">Login</button>
                 </form>
@@ -38,27 +47,202 @@
             <!-- Registration Form -->
             <div id="registerForm" style="display: none;">
                 <h3>Register as Seller</h3>
-                <form action="/seller/register" method="POST" class="auth-form">
+                <form action="/seller/register" method="POST" class="auth-form" enctype="multipart/form-data">
+                    <!-- Basic Info -->
                     <div class="form-group">
-                        <input type="text" name="name" placeholder="Full Name" required>
+                        <label>
+                            Full Name <span class="red-star">*</span>
+                            <input type="text" name="name" placeholder="Full Name" required>
+                        </label>
                     </div>
                     <div class="form-group">
-                        <input type="text" name="shopName" placeholder="Shop Name" required>
+                        <label>
+                            Shop Name <span class="red-star">*</span>
+                            <input type="text" name="shopName" placeholder="Shop Name" required>
+                        </label>
                     </div>
                     <div class="form-group">
-                        <input type="email" name="email" placeholder="Email" required>
+                        <label>
+                            Email <span class="red-star">*</span>
+                            <input type="email" name="email" placeholder="Email" required>
+                        </label>
                     </div>
                     <div class="form-group">
-                        <input type="password" name="password" placeholder="Password" required>
+                        <label>
+                            Password <span class="red-star">*</span>
+                            <input type="password" name="password" placeholder="Password" required>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            WhatsApp Number <span class="red-star">*</span>
+                            <input type="text" name="phoneNumber" placeholder="WhatsApp Number" required>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            Alternative Number
+                            <input type="text" name="altNumber" placeholder="Alternative Number">
+                        </label>
+                    </div>
+                    <!-- Address -->
+                    <div class="form-group">
+                        <label>
+                            Country <span class="red-star">*</span>
+                            <input type="text" name="country" placeholder="Country" required>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            State <span class="red-star">*</span>
+                            <input type="text" name="state" placeholder="State" required>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            City <span class="red-star">*</span>
+                            <input type="text" name="city" placeholder="City" required>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            Address <span class="red-star">*</span>
+                            <input type="text" name="address" placeholder="Address" required>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            Pin Code <span class="red-star">*</span>
+                            <input type="text" name="pincode" placeholder="Pin Code" required>
+                        </label>
+                    </div>
+                    <!-- Process Time & Return Policy -->
+                    <div class="form-group">
+                        <label>
+                            Ready in how many days (Process Time) <span class="red-star">*</span>
+                            <input type="number" name="processTime" placeholder="Process Time" required>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            Return Policy <span class="red-star">*</span>
+                            <input type="text" name="returnPolicy" placeholder="Return Policy" required>
+                        </label>
+                    </div>
+                    <!-- Payment Details -->
+                    <div class="form-group">
+                        <label>Payment Details</label>
+                        <div class="radio-group">
+                            <label><input class="radio" type="radio" name="paymentType" value="upi" required onchange="togglePaymentFields()"> UPI</label>
+                            <label><input class="radio" type="radio" name="paymentType" value="bank" onchange="togglePaymentFields()"> Bank Transfer</label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="upiField" style="display:none;">
+                        <label>
+                            UPI ID
+                            <input type="text" name="upiId" placeholder="UPI ID">
+                        </label>
+                    </div>
+                    <div id="bankFields" style="display:none;">
+                        <div class="form-group">
+                            <label>
+                                Bank Name
+                                <input type="text" name="bankName" placeholder="Bank Name">
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                Account Number
+                                <input type="text" name="accountNumber" placeholder="Account Number">
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                IFSC Code
+                                <input type="text" name="ifsc" placeholder="IFSC Code">
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                Name as on Passbook
+                                <input type="text" name="passbookName" placeholder="Name as on Passbook">
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                Branch Location
+                                <input type="text" name="branchLocation" placeholder="Branch Location">
+                            </label>
+                        </div>
+                    </div>
+                    <!-- ID Verification -->
+                    <div class="form-group">
+                        <label for="personalIdProof">Personal Identity Proof (Aadhar Card/Driving License/Passport etc) <span class="red-star">*</span></label>
+                        <input type="file" name="personalIdProof" id="personalIdProof" accept=".jpg,.jpeg,.png,.pdf" required>
+                    </div>
+                    <!-- Social Media -->
+                    <div class="form-group">
+                        <label>
+                            Social Media ID (Instagram/Facebook)
+                            <input type="text" name="socialMedia" placeholder="Social Media ID">
+                        </label>
+                    </div>
+                    <!-- Brand Logo -->
+                    <div class="form-group">
+                        <label for="brandLogo">Brand Logo (optional)</label>
+                        <input type="file" name="brandLogo" id="brandLogo" accept=".jpg,.jpeg,.png">
+                    </div>
+                    <!-- Story & Experience -->
+                    <div class="form-group">
+                        <label>
+                            Small story of how you started
+                            <textarea name="story" placeholder="Your Story" rows="3"></textarea>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            Your Experience (years/months) <span class="red-star">*</span>
+                            <input type="text" name="experience" placeholder="Experience" required>
+                        </label>
+                    </div>
+                    <!-- Business Registered -->
+                    <div class="form-group">
+                        <label for="isBusinessRegistered">Is your business registered? <span class="red-star">*</span></label>
+                        <select name="isBusinessRegistered" id="isBusinessRegistered" required onchange="toggleBusinessProof()">
+                            <option value="">Select</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <!-- Business Identity Proof (hidden by default) -->
+                    <div class="form-group" id="businessProofGroup" style="display:none;">
+                        <label for="businessIdProof">Business Identity Proof (GST, MSME, Shop Act, etc)</label>
+                        <input type="file" name="businessIdProof" id="businessIdProof" accept=".jpg,.jpeg,.png,.pdf">
+                    </div>
+                    <!-- Confirmations -->
+                    <div class="form-group check-group">
+                        <label>
+                            <input type="checkbox" name="agreement1" required>
+                            <span class="custom-checkbox"></span>
+                            I confirm that all information provided is true and correct. <span class="red-star">*</span>
+                        </label>
+                    </div>
+                    <div class="form-group check-group">
+                        <label>
+                            <input type="checkbox" name="agreement2" required>
+                            <span class="custom-checkbox"></span>
+                            I agree to the terms and conditions of Shilp India. <span class="red-star">*</span>
+                        </label>
                     </div>
                     <button type="submit" class="auth-button">Register</button>
                 </form>
                 <div class="auth-redirect">
-                    <p>Already have an account? <a href="#" onclick="toggleForms()">Login here</a></p>
-                </div>
+                <p>Already have an account? <a href="#" onclick="toggleForms()">Login here</a></p>
+            </div>
             </div>
         </div>
-    </div>
+            <img src="/static/images/seller-banner.jpg" alt="Welcome to Shilp India" class="seller-auth-banner animate-slidein" />
+        </div>
 
     <script>
         function toggleForms() {
@@ -67,9 +251,58 @@
             if (loginForm.style.display === 'none') {
                 loginForm.style.display = 'block';
                 registerForm.style.display = 'none';
+                document.querySelector('.seller-auth-wrapper').style.minWidth = "auto";
             } else {
                 loginForm.style.display = 'none';
                 registerForm.style.display = 'block';
+                document.querySelector('.seller-auth-wrapper').style.minWidth = '95%';
+            }
+        }
+
+        function toggleBusinessProof() {
+            const select = document.getElementById('isBusinessRegistered');
+            const businessProofGroup = document.getElementById('businessProofGroup');
+            if (select.value === 'yes') {
+                businessProofGroup.style.display = 'block';
+                document.getElementById('businessIdProof').required = true;
+            } else {
+                businessProofGroup.style.display = 'none';
+                document.getElementById('businessIdProof').required = false;
+            }
+        }
+
+        function togglePaymentFields() {
+            const upiField = document.getElementById('upiField');
+            const bankFields = document.getElementById('bankFields');
+            const upiRadio = document.querySelector('input[name="paymentType"][value="upi"]');
+            const bankRadio = document.querySelector('input[name="paymentType"][value="bank"]');
+            if (upiRadio.checked) {
+                upiField.style.display = 'block';
+                bankFields.style.display = 'none';
+                document.querySelector('input[name="upiId"]').required = true;
+                document.querySelector('input[name="bankName"]').required = false;
+                document.querySelector('input[name="accountNumber"]').required = false;
+                document.querySelector('input[name="ifsc"]').required = false;
+                document.querySelector('input[name="passbookName"]').required = false;
+                document.querySelector('input[name="branchLocation"]').required = false;
+            } else if (bankRadio.checked) {
+                upiField.style.display = 'none';
+                bankFields.style.display = 'block';
+                document.querySelector('input[name="upiId"]').required = false;
+                document.querySelector('input[name="bankName"]').required = true;
+                document.querySelector('input[name="accountNumber"]').required = true;
+                document.querySelector('input[name="ifsc"]').required = true;
+                document.querySelector('input[name="passbookName"]').required = true;
+                document.querySelector('input[name="branchLocation"]').required = true;
+            } else {
+                upiField.style.display = 'none';
+                bankFields.style.display = 'none';
+                document.querySelector('input[name="upiId"]').required = false;
+                document.querySelector('input[name="bankName"]').required = false;
+                document.querySelector('input[name="accountNumber"]').required = false;
+                document.querySelector('input[name="ifsc"]').required = false;
+                document.querySelector('input[name="passbookName"]').required = false;
+                document.querySelector('input[name="branchLocation"]').required = false;
             }
         }
     </script>
