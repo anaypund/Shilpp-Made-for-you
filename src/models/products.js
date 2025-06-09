@@ -9,6 +9,72 @@ const productSchema = mongoose.Schema({
         type: Number,
         required: true,
     },
+    sellingPrice: {
+        type: Number,
+    },
+    discount: {
+        type: Number,
+        required: false, // Optional field for products without discounts
+        default: 0
+    },
+    discountType: {
+        type: String,
+        enum: ['percentage', 'fixed'], // Type of discount
+        required: false, // Optional field for products without discounts
+        default: 'percentage'
+    },
+    onSale: {
+        type: Boolean,
+        required: true,
+        default: false
+    },
+    isActive: {
+        type: Boolean,
+        required: true,
+        default: true // Indicates if the product is currently active/listed
+    },
+    isCustomizable: {
+        type: Boolean,
+        required: true,
+        default: false // Indicates if the product can be customized
+    },
+    customizationLabel: {
+        type: String,
+        required: false, // Optional field for products that are not customizable
+        default: 'Customize your product'
+    },
+    customizationType: {
+        type: String,
+        enum: ['image', 'text', 'both'], // Type of customization available
+        required: false, // Optional field for products that are not customizable
+        default: 'none'
+    },
+    customizeImage: {
+        type: String,
+        required: false, // Optional field for products that are not customizable
+    },
+    customizeText: {
+        type: String,
+        required: false, // Optional field for products that are not customizable
+    },
+    isVerified: {
+        type: Boolean,
+        required: true,
+        default: false
+    },
+    category: {
+        type: String,
+        required: true,
+    },
+    subCategory: {
+        type: String,
+        required: true,
+    },
+    subSubCategory: {
+        type: String,
+        required: false, // Optional field for deeper categorization
+    },
+
     imagePath: {
         type: String,
         required: true,
@@ -25,7 +91,7 @@ const productSchema = mongoose.Schema({
         type: String,
         required: true,
     },
-    keyPoints: {
+    tags: {
         type: [String],
         required: true,
     },

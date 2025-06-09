@@ -57,7 +57,7 @@
     '{{jsEscape this.productName}}',
     {{this.price}},
     '{{jsEscape this.description}}',
-    '{{jsEscape this.keyPoints}}',
+    '{{jsEscape this.tags}}',
     {{this.inventory}},
     {{#if this.width}}{{this.width}}{{else}}0{{/if}},
     {{#if this.length}}{{this.length}}{{else}}0{{/if}},
@@ -66,7 +66,13 @@
     {{#if this.isHandmade}}true{{else}}false{{/if}},
     '{{jsEscape this.material}}',
     '{{jsEscape this.otherSpecs}}',
-    '{{jsEscape this.careInstructions}}'
+    '{{jsEscape this.careInstructions}}',
+    '{{this.category}}',
+    '{{this.subCategory}}',
+    '{{this.subSubCategory}}',
+    {{#if this.isCustomizable}}true{{else}}false{{/if}},
+    '{{jsEscape this.customizationLabel}}',
+    '{{this.customizationType}}'
 )">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -76,7 +82,15 @@
                             </div>
                         </div>
                         <div class="product-info">
-                            <h4>{{this.productName}}</h4>
+                            <h4>
+                                <span class="verified-badge">
+                                {{#if this.isVerified}}
+                                    <i class="fa-solid fa-certificate" id="verified"></i>
+                                {{else}}
+                                    <i class="fa-solid fa-clock" id="notVerified"></i>
+                                {{/if}}
+                                </span>{{this.productName}}
+                            </h4>
                             <p class="price">₹{{this.price}}</p>
                         </div>
                     </div>
@@ -156,8 +170,87 @@
                 <hr class="modal-separator">
 
                 <div class="form-group">
-                    <label>Key Points (comma-separated) <span style="color:#e75480;">*</span></label>
-                    <input type="text" id="keyPoints" name="keyPoints" required>
+                    <label>Category 1<span style="color:#e75480;">*</span></label>
+                    <select name="category" id="category" required>
+                        <option value="">-- Select a Category --</option>
+                        <option value="home-living">Home & Living</option>
+                        <option value="art-wall-decor">Art & Wall Decor</option>
+                        <option value="stationery-paper-goods">Stationery & Paper Goods</option>
+                        <option value="jewelry-accessories">Jewelry & Accessories</option>
+                        <option value="toys-games">Toys & Games</option>
+                        <option value="fashion-wearables">Fashion & Wearables</option>
+                        <option value="festive-seasonal">Festive & Seasonal</option>
+                        <option value="diy-craft-supplies">DIY & Craft Supplies</option>
+                        <option value="handmade-gifts">Handmade Gifts</option>
+                        <option value="personalized-products">Personalized Products</option>
+                        <option value="wellness-selfcare">Wellness & Self-care</option>
+                        <option value="kids-baby">Kids & Baby</option>
+                        <option value="eco-friendly">Eco-Friendly & Sustainable</option>
+                        <option value="office-work-essentials">Office & Work Essentials</option>
+                        <option value="spiritual-religious">Spiritual & Religious</option>
+                        <option value="plants-planters">Plants & Planters</option>
+                        <option value="custom-art-portraits">Custom Art & Portraits</option>
+                        <option value="collectibles-memorabilia">Collectibles & Memorabilia</option>
+                        <option value="pet-accessories-gifts">Pet Accessories & Gifts</option>
+                        <option value="kitchen-dining">Kitchen & Dining</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <label>Category 2<span style="color:#e75480;">*</span></label>
+                    <select name="subCategory" id="subCategory" required>
+                        <option value="">-- Select a Category --</option>
+                        <option value="home-living">Home & Living</option>
+                        <option value="art-wall-decor">Art & Wall Decor</option>
+                        <option value="stationery-paper-goods">Stationery & Paper Goods</option>
+                        <option value="jewelry-accessories">Jewelry & Accessories</option>
+                        <option value="toys-games">Toys & Games</option>
+                        <option value="fashion-wearables">Fashion & Wearables</option>
+                        <option value="festive-seasonal">Festive & Seasonal</option>
+                        <option value="diy-craft-supplies">DIY & Craft Supplies</option>
+                        <option value="handmade-gifts">Handmade Gifts</option>
+                        <option value="personalized-products">Personalized Products</option>
+                        <option value="wellness-selfcare">Wellness & Self-care</option>
+                        <option value="kids-baby">Kids & Baby</option>
+                        <option value="eco-friendly">Eco-Friendly & Sustainable</option>
+                        <option value="office-work-essentials">Office & Work Essentials</option>
+                        <option value="spiritual-religious">Spiritual & Religious</option>
+                        <option value="plants-planters">Plants & Planters</option>
+                        <option value="custom-art-portraits">Custom Art & Portraits</option>
+                        <option value="collectibles-memorabilia">Collectibles & Memorabilia</option>
+                        <option value="pet-accessories-gifts">Pet Accessories & Gifts</option>
+                        <option value="kitchen-dining">Kitchen & Dining</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <label>Category 3</label>
+                    <select name="subSubCategory" id="subSubCategory">
+                        <option value="">-- Select a Category --</option>
+                        <option value="home-living">Home & Living</option>
+                        <option value="art-wall-decor">Art & Wall Decor</option>
+                        <option value="stationery-paper-goods">Stationery & Paper Goods</option>
+                        <option value="jewelry-accessories">Jewelry & Accessories</option>
+                        <option value="toys-games">Toys & Games</option>
+                        <option value="fashion-wearables">Fashion & Wearables</option>
+                        <option value="festive-seasonal">Festive & Seasonal</option>
+                        <option value="diy-craft-supplies">DIY & Craft Supplies</option>
+                        <option value="handmade-gifts">Handmade Gifts</option>
+                        <option value="personalized-products">Personalized Products</option>
+                        <option value="wellness-selfcare">Wellness & Self-care</option>
+                        <option value="kids-baby">Kids & Baby</option>
+                        <option value="eco-friendly">Eco-Friendly & Sustainable</option>
+                        <option value="office-work-essentials">Office & Work Essentials</option>
+                        <option value="spiritual-religious">Spiritual & Religious</option>
+                        <option value="plants-planters">Plants & Planters</option>
+                        <option value="custom-art-portraits">Custom Art & Portraits</option>
+                        <option value="collectibles-memorabilia">Collectibles & Memorabilia</option>
+                        <option value="pet-accessories-gifts">Pet Accessories & Gifts</option>
+                        <option value="kitchen-dining">Kitchen & Dining</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <hr class="modal-separator">
+
+                <div class="form-group">
+                    <label>Search Tags (comma-separated) <span style="color:#e75480;">*</span></label>
+                    <input type="text" id="tags" name="tags" placeholder="eg. gift, mother's day, diwali, festival, couples, girlfriend, Jewelry..." required>
                 </div>
                 <hr class="modal-separator">
 
@@ -216,6 +309,34 @@
                 </div>
                 <hr class="modal-separator">
 
+                <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 12px;">
+                    <label>
+                        <input type="checkbox" id="isCustomizable" name="isCustomizable" style="width:18px; height:18px;" onchange="toggleCustomizationFields()">
+                        Is this product customizable for customers?
+                    </label>
+                </div>
+
+                <div id="customizationFields" style="display:none;">
+                  <div class="form-group" >
+                    <label>
+                      Customization Label (max 50 chars)
+                    </label>
+                      <input type="text" name="customizationLabel" id="customizationLabel" maxlength="50" placeholder="eg. Select your photo">
+                  </div>
+                  <div class="form-group">
+                    <label>
+                      Customization Type
+                    </label>
+                      <select name="customizationType" id="customizationType">
+                        <option value="">Select type</option>
+                        <option value="text">Text</option>
+                        <option value="image">Image</option>
+                        <option value="both">Both</option>
+                      </select>
+                  </div>
+                </div>
+                <hr class="modal-separator">
+
                 <div class="form-group">
                     <label>Material <span style="color:#e75480;">*</span></label>
                     <input type="text" id="material" name="material" placeholder="e.g. Wood, Resin, Cotton" required>
@@ -270,7 +391,7 @@
             name,
             price,
             description,
-            keyPoints,
+            tags,
             inventory,
             width,
             length,
@@ -279,7 +400,13 @@
             isHandmade,
             material,
             otherSpecs,
-            careInstructions
+            careInstructions,
+            category,
+            subCategory,
+            subSubCategory,
+            isCustomizable,
+            customizationLabel,
+            customizationType,
         ) {
             document.getElementById('modalTitle').textContent = 'Edit Product';
             document.getElementById('productForm').action = `/seller/products/update/${id}`;
@@ -287,7 +414,7 @@
             document.getElementById('productName').value = name;
             document.getElementById('price').value = price;
             document.getElementById('description').value = description;
-            document.getElementById('keyPoints').value = keyPoints;
+            document.getElementById('tags').value = tags;
             document.getElementById('inventory').value = inventory;
             document.getElementById('width').value = width || '';
             document.getElementById('length').value = length || '';
@@ -297,6 +424,17 @@
             document.getElementById('otherSpecs').value = otherSpecs || '';
             document.getElementById('careInstructions').value = careInstructions || '';
             document.getElementById('isHandmade').checked = !!isHandmade;
+
+            // Prefill categories
+            document.getElementById('category').value = category || '';
+            document.getElementById('subCategory').value = subCategory || '';
+            document.getElementById('subSubCategory').value = subSubCategory || '';
+
+            // Customization fields
+            document.getElementById('isCustomizable').checked = !!isCustomizable;
+            toggleCustomizationFields();
+            document.getElementById('customizationLabel').value = customizationLabel || '';
+            document.getElementById('customizationType').value = customizationType || '';
 
             // Agreements must be checked to enable submit
             document.getElementById('agreement1').checked = false;
@@ -557,6 +695,16 @@
                 document.getElementById('productModal').style.display = 'block';
             };
         });
+
+        function toggleCustomizationFields() {
+          const isCustom = document.getElementById('isCustomizable').checked;
+          document.getElementById('customizationFields').style.display = isCustom ? 'block' : 'none';
+          if (!isCustom) {
+            document.getElementById('customizationLabel').value = '';
+            document.getElementById('customizationType').value = '';
+          }
+        }
+
     </script>
 </body>
 </html>

@@ -223,7 +223,7 @@ router.post(
   async (req, res) => {
     try {
       const {
-        productName, price, description, keyPoints, inventory,
+        productName, price, description, tags, inventory, category, subCategory, subSubCategory,
         width, length, height, weight, isHandmade, material,
         otherSpecs, careInstructions
       } = req.body;
@@ -251,12 +251,15 @@ router.post(
         productName,
         price: Number(price),
         imagePath: images[0] || '',
+        category,
+        subCategory,
+        subSubCategory,
         productImages: images,
         productVideos: videos,
         sellerName: seller.shopName,
         sellerID: seller._id,
         description,
-        keyPoints: keyPoints.split(",").map((point) => point.trim()),
+        tags: tags.split(",").map((point) => point.trim()),
         keyWords: productName.toLowerCase().split(" "),
         inventory: Number(inventory) || 0,
         width: Number(width),
@@ -266,7 +269,11 @@ router.post(
         isHandmade: isHandmade === "on" || isHandmade === "true" || isHandmade === true,
         material,
         otherSpecs,
-        careInstructions
+        careInstructions,
+        // Customization fields
+        isCustomizable: req.body.isCustomizable === "true" || req.body.isCustomizable === "on" || req.body.isCustomizable === true,
+        customizationLabel: req.body.customizationLabel || undefined,
+        customizationType: req.body.customizationType || "none"
       });
 
       await product.save();
@@ -285,7 +292,7 @@ router.post(
   async (req, res) => {
     try {
       const {
-        productName, inventory, price, description, keyPoints,
+        productName, inventory, price, description, tags, category, subCategory, subSubCategory,
         width, length, height, weight, isHandmade, material,
         otherSpecs, careInstructions
       } = req.body;
@@ -294,8 +301,12 @@ router.post(
         productName,
         price: Number(price),
         description,
+        category,
+        subCategory,
+        subSubCategory,
+        keyWords: productName.toLowerCase().split(" "),
         inventory: Number(inventory) || 0,
-        keyPoints: keyPoints.split(",").map((point) => point.trim()),
+        tags: tags.split(",").map((point) => point.trim()),
         width: Number(width),
         length: Number(length),
         height: height ? Number(height) : undefined,
@@ -303,7 +314,11 @@ router.post(
         isHandmade: isHandmade === "on" || isHandmade === "true" || isHandmade === true,
         material,
         otherSpecs,
-        careInstructions
+        careInstructions,
+        // Customization fields
+        isCustomizable: req.body.isCustomizable === "true" || req.body.isCustomizable === "on" || req.body.isCustomizable === true,
+        customizationLabel: req.body.customizationLabel || undefined,
+        customizationType: req.body.customizationType || "none"
       };
 
       // Handle new uploads
