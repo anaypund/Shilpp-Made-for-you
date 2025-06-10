@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+    {{> head }}
+<body>
+    {{> navbar }}
+    {{> tabs }}
+
+    {{#if products.length}}
+    <section class="products" id="productContainer">
+            {{#each products}}
+                <form action="/product-details" method="GET" class="product-card">
+                    <input type="hidden" name="id" value="{{this._id}}">
+                    <button type="submit" style="all: unset; cursor: pointer; width: 100%;">
+                        <div class="product-card-image-wrapper">
+                            <img src="{{this.imagePath}}" alt="{{this.productName}}">
+                            {{#if this.discountBadge}}
+                                <span class="discount-badge">{{this.discountBadge}}</span>
+                            {{/if}}
+                        </div>
+                        <h4>{{this.productName}}</h4>
+                        <p class="price">
+                            <span class="discounted-price">&#8377;{{this.actualPrice}}</span>
+                            {{#if this.price}}
+                                <text class="original-price">&#8377;{{this.price}}</text>
+                            {{/if}}
+                        </p>
+                    </button>
+                </form>
+            {{/each}}
+    {{else}}
+    <section class="products" id="productContainer" style="justify-content: center;">
+            <div class="no-orders">
+                <h2>No products found</h2>
+                <p>Try a different search or browse our categories!</p>
+            </div>
+    {{/if}}
+    </section>
+
+    {{#if hasMore}}
+        <div style="text-align:center; margin: 24px 0;">
+            <button id="showMoreBtn" class="show-more-btn">Show More</button>
+        </div>
+    {{/if}}
+
+    {{> footer }}
+
+    <div class="cart-icon">
+        {{#if user}}
+            <a href="/cart" style="text-decoration: none; color: white;"><i class="fas fa-shopping-cart"></i></a>
+        {{else}}
+            <a href="/login" style="text-decoration: none; color: white;"><i class="fas fa-shopping-cart"></i></a>
+        {{/if}}
+    </div>
+
+<script>
+let currentPage = {{page}};
+const searchQuery = "{{search}}";
+const showMoreBtn = document.getElementById('showMoreBtn');
+if (showMoreBtn) {
+    showMoreBtn.addEventListener('click', async function() {
+        showMoreBtn.disabled = true;
+        showMoreBtn.textContent = "Loading...";
+        const nextPage = currentPage + 1;
+        const res = await fetch(`/filtered-products?search=${encodeURIComponent(searchQuery)}&page=${nextPage}`);
+        const html = await res.text();
+        // Extract only the product cards from the returned HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const newCards = tempDiv.querySelectorAll('.product-card');
+        newCards.forEach(card => {
+            document.getElementById('productContainer').appendChild(card);
+        });
+        // Check if there is still a show more button in the new HTML
+        const hasMore = tempDiv.querySelector('#showMoreBtn');
+        if (!hasMore) {
+            showMoreBtn.style.display = 'none';
+        } else {
+            showMoreBtn.disabled = false;
+            showMoreBtn.textContent = "Show More";
+        }
+        currentPage = nextPage;
+    });
+}
+</script>
+</body>
+</html>

@@ -7,32 +7,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-    <div class="auth-page">
-        <div class="auth-container">
-            <div class="auth-header">
-                <h2>Create Account</h2>
-                <p class="auth-subtitle">Join our creative community today 🎨</p>
-            </div>
-            {{#if error}}
-            <div class="error">{{error}}</div>
-            {{/if}}
-            <form action="/signup" method="POST" class="auth-form">
-                <div class="form-group">
-                    <label for="name">Full Name</label>
-                    <input type="text" id="name" name="name" placeholder="Enter your full name" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Create a password" required>
-                </div>
-                <button type="submit" class="auth-button">Sign Up</button>
-            </form>
-            <p class="auth-redirect">Already have an account? <a href="/login">Login</a></p>
+    <div class="seller-auth-wrapper">
+    <div class="seller-auth-form-section">
+        <div class="auth-header">
+            <h2 class="auth-heading animate-fadein">Create Account</h2>
+            <p class="auth-subtitle animate-slidein">Join our creative community today 🎨</p>
         </div>
+        {{#if error}}
+            <div class="error">{{error}}</div>
+        {{/if}}
+        <form action="/signup" method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+            <div class="form-group">
+                <label for="number">Contact Number</label>
+                <input type="number" id="number" name="number" placeholder="Enter your phone number" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a password" required>
+            </div>
+            <button type="submit" class="auth-button">Sign Up</button>
+        </form>
+        <p class="auth-redirect">Already have an account? <a href="/login">Login</a></p>
     </div>
+</div>
+
 </body>
 </html>

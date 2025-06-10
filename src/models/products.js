@@ -45,7 +45,7 @@ const productSchema = mongoose.Schema({
     },
     customizationType: {
         type: String,
-        enum: ['image', 'text', 'both'], // Type of customization available
+        enum: ['none', 'image', 'text', 'both'], // Type of customization available
         required: false, // Optional field for products that are not customizable
         default: 'none'
     },
@@ -79,12 +79,9 @@ const productSchema = mongoose.Schema({
         type: String,
         required: true,
     },
-    sellerName: {
-        type: String,
-        required: true,
-    },
     sellerID: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Seller', // Assuming you have a Seller model
         required: true,
     },
     description: {
@@ -143,7 +140,16 @@ const productSchema = mongoose.Schema({
     productVideos: {
         type: [String], // Array of video file paths/URLs
         required: false,
+    },
+    adminRemarks: {
+        type: [
+            {
+            text: String,
+            date: Date
+            }
+        ],
+        default: []
     }
-});
+}, {timestamps: true});
 
 module.exports = mongoose.model('productSchema', productSchema);

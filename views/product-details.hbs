@@ -5,17 +5,19 @@
     {{> navbar }}
     {{> tabs }}
 
-
-    {{#each product}}
     <div class="container">
     <div class="product-container">
         <!-- Row: Carousel + Details -->
         <div class="product-main-row">
             <div class="carousel-container">
                 <div class="carousel-image-wrapper">
-                    {{#each this.productImages}}
+                    {{#if product.discountBadge}}
+                        <span class="discount-badge">{{product.discountBadge}}</span>
+                    {{/if}}
+                    {{#each product.productImages}}
                         <img src="{{this}}" class="carousel-image{{#if @first}} active{{/if}}" alt="Product Image">
                     {{/each}}
+
                 </div>
                 <div class="carousel-controls">
                     <i class="fas fa-chevron-left" id="prevBtn"></i>
@@ -23,32 +25,39 @@
                     <i class="fas fa-chevron-right" id="nextBtn"></i>
                 </div>
             </div>
+
             <div class="product-details">
-                <h1>{{this.productName}}</h1>
+                <h1>{{product.productName}}</h1>
                 <div class="price">
-                    <span class="discounted-price">&#8377;{{this.price}}</span>
+                    <span class="discounted-price">&#8377;{{product.actualPrice}}</span>
+                    {{#if product.price}}
+                        <text class="original-price">&#8377;{{product.price}}</text>
+                    {{/if}}
                 </div>
-                {{#if (eq this.inventory 0)}}
+
+                {{#if (eq product.inventory 0)}}
                     <button class="add-to-cart out-of-stock" disabled>Out of Stock</button>
                 {{else}}
                     <form action="/cart" method="POST">
-                        <input type="hidden" name="id" value="{{this._id}}">
+                        <input type="hidden" name="id" value="{{product._id}}">
                         <button class="add-to-cart" onclick="openPopup()" type="submit">Add to Cart</button>
                         <button id="share-btn" class="add-to-cart" style="margin-top: 20px;">Share</button>
                     </form>
-                    <div class="inventory-status">In Stock: {{this.inventory}} items</div>
+                    <div class="inventory-status">In Stock: {{product.inventory}} items</div>
                 {{/if}}
+
                 <div class="description" style="margin: 16px 0;">
                     <strong>Description:</strong><br>
-                    {{this.description}}
+                    {{product.description}}
                 </div>
             </div>
         </div>
+
         <!-- Column: Videos + Specs -->
         <div class="product-side-column">
-            {{#if this.productVideos.length}}
+            {{#if product.productVideos.length}}
             <div class="product-videos-full">
-                {{#each this.productVideos}}
+                {{#each product.productVideos}}
                     <div class="video-lazy-wrapper" style="position:relative;margin:0 auto 18px auto;">
                         <img 
                             src="/static/images/thumbnail.jpg" 
@@ -66,35 +75,55 @@
                 {{/each}}
             </div>
             {{/if}}
-            <div class="product-specs-table" style="max-width:600px;margin:0 auto 32px auto;">
-                <h2 style="font-size:1.15em;margin-bottom:10px;color:#e75480;">Product Specifications</h2>
+            <div class="product-specs-table">
+                <h2 style="font-size:1.15em;margin-bottom:10px;">Product Specifications</h2>
                 <table style="width:100%;border-collapse:collapse;background:#fafafa;">
                     <tbody>
-                        {{#each this.keyPoints}}
-                            <tr>
-                                <td style="padding:7px 10px;color:#555;">&#8226; {{this}}</td>
-                                <td></td>
-                            </tr>
-                        {{/each}}
-                        <tr><td style="padding:7px 10px;">Seller</td><td style="padding:7px 10px;">{{../this.sellerName}}</td></tr>
-                        <tr><td style="padding:7px 10px;">Material</td><td style="padding:7px 10px;">{{../this.material}}</td></tr>
-                        <tr><td style="padding:7px 10px;">Handmade</td><td style="padding:7px 10px;">{{#if ../this.isHandmade}}Yes{{else}}No{{/if}}</td></tr>
                         <tr>
-                            <td style="padding:7px 10px;">Dimensions (inches)</td>
+                            <td style="padding:7px 10px; font-weight:bold;">Sold by</td>
+                            <td style="padding:7px 10px;"><p>{{seller.shopName}} ({{seller.city}}, {{seller.state}})</p></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:7px 10px; font-weight:bold;">Category</td>
+                            <td style="padding:7px 10px;">{{product.category}}, {{product.subCategory}}{{#if product.subSubCategory}}, {{product.subSubCategory}}{{/if}}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:7px 10px; font-weight:bold;">Material</td>
+                            <td style="padding:7px 10px;">{{product.material}}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:7px 10px; font-weight:bold;">Handmade</td>
+                            <td style="padding:7px 10px;">{{#if product.isHandmade}}Yes{{else}}No{{/if}}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:7px 10px; font-weight:bold;">Dimensions (inches)</td>
                             <td style="padding:7px 10px;">
-                                {{../this.width}}W × {{../this.length}}L
-                                {{#if ../this.height}} × {{../this.height}}H{{/if}}
+                                {{product.width}} × {{product.length}} (Width × Length)
+                                {{#if product.height}} × {{product.height}}Height{{/if}}
                             </td>
                         </tr>
-                        {{#if ../this.weight}}
-                            <tr><td style="padding:7px 10px;">Weight</td><td style="padding:7px 10px;">{{../this.weight}} kg</td></tr>
+                        {{#if product.weight}}
+                            <tr>
+                                <td style="padding:7px 10px; font-weight:bold;">Weight</td>
+                                <td style="padding:7px 10px;">{{product.weight}} kg</td>
+                            </tr>
                         {{/if}}
-                        {{#if ../this.otherSpecs}}
-                            <tr><td style="padding:7px 10px;">Other Specifications</td><td style="padding:7px 10px;">{{../this.otherSpecs}}</td></tr>
+                        {{#if product.otherSpecs}}
+                            <tr>
+                                <td style="padding:7px 10px; font-weight:bold;">Other Specifications</td>
+                                <td style="padding:7px 10px;">{{product.otherSpecs}}</td>
+                            </tr>
                         {{/if}}
-                        {{#if ../this.careInstructions}}
-                            <tr><td style="padding:7px 10px;">Care Instructions</td><td style="padding:7px 10px;">{{../this.careInstructions}}</td></tr>
+                        {{#if product.careInstructions}}
+                            <tr>
+                                <td style="padding:7px 10px; font-weight:bold;">Care Instructions</td>
+                                <td style="padding:7px 10px;">{{product.careInstructions}}</td>
+                            </tr>
                         {{/if}}
+                            <tr>
+                                <td style="padding:7px 10px; font-weight:bold;">Tags</td>
+                                <td style="padding:7px 10px;color:#555;" colspan="2">&#8226;{{#each keyPoints}} {{this}}, {{/each}}</td>
+                            </tr>
                     </tbody>
                 </table>
             </div>
@@ -102,7 +131,6 @@
     </div>
 </div>
 
-    {{/each}}
 <!-- Cart Icon -->
     <div class="cart-icon">
         {{#if user}}
@@ -199,10 +227,10 @@
                 showImage(currentIndex);
             });
 
-            setInterval(() => {
-                currentIndex = (currentIndex + 1) % images.length;
-                showImage(currentIndex);
-            }, 5000);
+            //setInterval(() => {
+            //    currentIndex = (currentIndex + 1) % images.length;
+            //    showImage(currentIndex);
+            //}, 5000);
 
             showImage(currentIndex);
         }

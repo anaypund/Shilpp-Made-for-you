@@ -157,12 +157,54 @@ router.get('/sellers', isAdminAuthenticated, async (req, res) => {
 // Products route
 router.get('/products', isAdminAuthenticated, async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    // Populate seller info using sellerID
+    const products = await Product.find()
+      .populate('sellerID') // This will populate the seller details
+      .sort({ createdAt: -1 });
     res.render('admin/products', { products });
   } catch (error) {
     res.status(500).send('Error loading products');
   }
 });
+
+router.post('/products/:id/admin-update', async (req, res) => {
+  console.log("Admin update request received for product ID:", req.params.id);
+    try {
+        const { sellingPrice, discountType, discount, onSale, isVerified, adminRemark } = req.body;
+        const update = {
+            sellingPrice,
+            discountType,
+            discount,
+            onSale,
+            isVerified
+        };
+
+        // Handle admin remarks as a thread (array)
+        const product = await Product.findById(req.params.id);
+        if (!product) return res.json({ success: false, error: 'Product not found' });
+
+        if (adminRemark && adminRemark.trim()) {
+            if (!Array.isArray(product.adminRemarks)) product.adminRemarks = [];
+            product.adminRemarks.push({
+                text: adminRemark,
+                date: new Date()
+            });
+        }
+
+        // Update other fields
+        product.sellingPrice = sellingPrice;
+        product.discountType = discountType;
+        product.discount = discount;
+        product.onSale = onSale;
+        product.isVerified = isVerified;
+
+        await product.save();
+        res.json({ success: true });
+    } catch (err) {
+        res.json({ success: false, error: err.message });
+    }
+});
+
 
 // Customers route
 router.get('/customers', isAdminAuthenticated, async (req, res) => {

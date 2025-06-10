@@ -11,6 +11,7 @@ const crypto = require("crypto"); // Added for HMAC
 const User = require("../models/User");
 const Order = require("../models/Order"); // Added Order model
 const Product = require("../models/products");
+const Seller = require("../models/Seller");
 
 const { Storage } = require('@google-cloud/storage');
 const path = require('path');
@@ -74,14 +75,14 @@ routes.get("/signup", (req, res) => {
 
 routes.post("/signup", async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, number, password } = req.body;
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
             return res.render("signup", { error: "Email already exists" });
         }
 
-        const user = new User({ name, email, password });
+        const user = new User({ name, email, number, password });
         await user.save();
 
         req.session.userId = user._id;
@@ -130,27 +131,151 @@ routes.use(bodyParser.json());
 routes.use("/static", express.static("public"));
 
 routes.get("/", async (req, res) => {
+    const products = await Products.find({ isVerified: true });
+    const user = req.session.userId ? await User.findById(req.session.userId) : null;
+
+    const processedProducts = products.map(product => {
+        let actualPrice = product.sellingPrice;
+        let price = null;
+        let discountBadge = null;
+
+        if (product.discount && product.discount !== 0) {
+            if (product.discountType === "percentage") {
+                price = actualPrice;
+                actualPrice = actualPrice - (actualPrice * product.discount / 100);
+                discountBadge = `-${product.discount}% off`;
+            } else if (product.discountType === "fixed") {
+                price = actualPrice;
+                actualPrice = actualPrice - product.discount;
+                discountBadge = `-₹${product.discount} off`;
+            }
+        }
+
+        return {
+            ...product.toObject(),
+            actualPrice: actualPrice.toFixed(2),
+            price: price ? price.toFixed(2) : null,
+            discountBadge
+        };
+    });
+
+
     res.status(200).render("index", {
-        Product: await Products.find(),
-        user: req.session.userId
-            ? await User.findById(req.session.userId)
-            : null,
+        Product: processedProducts,
+        user,
     });
 });
+
+routes.get('/filtered-products', async (req, res) => {
+    try {
+        const search = req.query.search ? req.query.search.trim() : '';
+        const page = parseInt(req.query.page) || 1;
+        const limit = 15;
+        const skip = (page - 1) * limit;
+
+        // Build search conditions
+        let sellerIds = [];
+        if (search) {
+            // Find sellers whose name matches search
+            const sellers = await Seller.find({ name: { $regex: search, $options: 'i' } }, '_id');
+            sellerIds = sellers.map(s => s._id);
+        }
+
+        // Always require isVerified: true
+        const baseCondition = { isVerified: true };
+
+        const query = search
+            ? {
+                ...baseCondition,
+                $or: [
+                    { sellerID: { $in: sellerIds } },
+                    { keyWords: { $regex: search, $options: 'i' } },
+                    { tags: { $regex: search, $options: 'i' } },
+                    { category: { $regex: search, $options: 'i' } },
+                    { subCategory: { $regex: search, $options: 'i' } },
+                    { subSubCategory: { $regex: search, $options: 'i' } }
+                ]
+            }
+            : baseCondition;
+
+        // Get total count for pagination
+        const total = await Product.countDocuments(query);
+
+        // Get products for this page
+        const products = await Product.find(query)
+            .populate('sellerID')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        // Prepare products for template (add discountBadge, actualPrice, etc. if needed)
+        const productsForView = products.map(p => ({
+            ...p.toObject(),
+            discountBadge: p.discount && p.discount > 0
+                ? (p.discountType === 'percentage'
+                    ? `-${p.discount}%`
+                    : `-₹${p.discount}`)
+                : null,
+            actualPrice: p.sellingPrice || p.price
+        }));
+
+        res.render('filtered-products', {
+            products: productsForView,
+            search,
+            page,
+            hasMore: total > page * limit
+        });
+    } catch (err) {
+        res.status(500).send('Error loading products');
+    }
+});
+
 
 routes.get("/product-details", async (req, res) => {
     const productId = req.query.id;
     try {
-        const productArray = await Products.find({ _id: productId });
+        // Populate sellerID reference
+        const productArray = await Products.find({ _id: productId }).populate('sellerID');
+        if (!productArray || productArray.length === 0) {
+            return res.status(404).send("Product not found");
+        }
+
         const product = productArray[0];
-        const keyPoints = product.keyPoints;
+        const keyPoints = product.tags;
+
+        // --- DISCOUNT LOGIC ---
+        let actualPrice = product.sellingPrice;
+        let price = null;
+        let discountBadge = null;
+
+        if (product.discount && product.discount !== 0) {
+            if (product.discountType === "percentage") {
+                price = actualPrice;
+                actualPrice = actualPrice - (actualPrice * product.discount / 100);
+                discountBadge = `-${product.discount}% off`;
+            } else if (product.discountType === "fixed") {
+                price = actualPrice;
+                actualPrice = actualPrice - product.discount;
+                discountBadge = `-₹${product.discount} off`;
+            }
+        }
+
+        const processedProduct = {
+            ...product.toObject(),
+            actualPrice: actualPrice.toFixed(2),
+            price: price ? price.toFixed(2) : null,
+            discountBadge
+        };
+
         const user = req.session.userId
             ? await User.findById(req.session.userId)
             : null;
+
         res.render("product-details", {
-            product: productArray,
+            product: processedProduct,
             keyPoints: keyPoints,
             user: user,
+            seller: product.sellerID // Pass populated seller to frontend
         });
     } catch (error) {
         res.status(500).send("Product not found");

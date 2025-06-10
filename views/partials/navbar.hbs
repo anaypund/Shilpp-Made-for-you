@@ -4,8 +4,8 @@
             <img src="/static/images/Logo1.png" alt="Shilp India"/>
         </a>
         <div class="navbar-search-wrapper navbar-search-desktop">
-            <form id="navbarSearchFormDesktop" class="navbar-search-form" action="/search" method="GET" autocomplete="off">
-                <input type="text" name="q" id="navbarSearchInputDesktop" placeholder="Search for personalised gifts, special occasions gifts, birthday gifts & more.." />
+            <form id="navbarSearchFormDesktop" class="navbar-search-form" action="/filtered-products" method="GET" autocomplete="off">
+                <input type="text" name="search" id="navbarSearchInputDesktop" value="{{search}}" placeholder="Search for personalised gifts, special occasions gifts, birthday gifts & more.." />
                 <button type="submit" id="navbarSearchBtnDesktop"><i class="hgi hgi-stroke hgi-search-01"></i></button>
             </form>
         </div>
@@ -20,8 +20,8 @@
         </div>
     </div>
     <div class="navbar-search-wrapper navbar-search-mobile">
-        <form id="navbarSearchFormMobile" class="navbar-search-form" action="/search" method="GET" autocomplete="off">
-            <input type="text" name="q" id="navbarSearchInputMobile" placeholder="Search for personalised gifts, special occasions gifts, birthday gifts and more.." />
+        <form id="navbarSearchFormMobile" class="navbar-search-form" action="/filtered-products" method="GET" autocomplete="off">
+            <input type="text" name="search" id="navbarSearchInputMobile" placeholder="Search for personalised gifts, special occasions gifts, birthday gifts and more.." />
             <button type="submit" id="navbarSearchBtnMobile"><i class="hgi hgi-stroke hgi-search-01"></i></button>
         </form>
     </div>

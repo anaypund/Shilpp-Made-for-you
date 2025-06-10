@@ -48,7 +48,16 @@
         let searchBoxVisible = false;
         const products = [
         {{#each Product}}
-            { title: "{{this.productName}}", _id: "{{this._id}}", image:"{{this.imagePath}}", category: "Mens", price: "1500", actualPrice: "{{this.price}}", keywords: "{{this.keyWords}}" },
+            {
+                title: "{{this.productName}}",
+                _id: "{{this._id}}",
+                image: "{{this.imagePath}}",
+                category: "Mens",
+                price: {{#if this.price}}"{{this.price}}"{{else}}""{{/if}},
+                actualPrice: "{{this.actualPrice}}",
+                keywords: "{{this.keyWords}}",
+                discountBadge: {{#if this.discountBadge}}"{{this.discountBadge}}"{{else}}null{{/if}}
+            },
         {{/each}}
         ];
 
@@ -69,9 +78,13 @@
                             <button type="submit" style="all: unset; cursor: pointer; width: 100%;">
                                 <div class="product-card-image-wrapper">
                                     <img src="${product.image}" alt="${product.title}">
+                                    ${product.discountBadge ? `<span class="discount-badge">${product.discountBadge}</span>` : ""}
                                 </div>
                                 <h4>${product.title}</h4>
-                                <p class="price"><span class="discounted-price">&#8377;${product.actualPrice}</span> <text>${product.price}</text></p>
+                                <p class="price">
+                                    <span class="discounted-price">&#8377;${product.actualPrice}</span>
+                                    ${product.price ? `<text class="original-price">&#8377;${product.price}</text>` : ""}
+                                </p>
                             </button>
                         </form>`;
                     container.insertAdjacentHTML('beforeend', productCard);
@@ -79,12 +92,6 @@
             });
         }
 
-
-        function filterCategory(category) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelector(`.tab[onclick="filterCategory('${category}')"]`).classList.add('active');
-            populateProducts(category);
-        }
 
 
         populateProducts(); // Initial load of products
@@ -101,7 +108,7 @@
         }
 
         // Optional: Auto-slide every 5 seconds
-        setInterval(() => changeSlide(1), 2000);
+        setInterval(() => changeSlide(1), 3000);
 
     </script>
 </body>

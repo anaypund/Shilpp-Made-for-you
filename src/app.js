@@ -49,6 +49,10 @@ hbs.registerHelper('jsEscape', function(str) {
         .replace(/"/g, '\\"')
         .replace(/\r?\n/g, '\\n');
 });
+hbs.registerHelper('json', function(context) {
+  return JSON.stringify(context).replace(/"/g, '&quot;');
+});
+
 mongoose.set('strictQuery', false);
 
 // const securePassword = async(password)=>{

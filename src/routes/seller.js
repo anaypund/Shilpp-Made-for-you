@@ -256,7 +256,6 @@ router.post(
         subSubCategory,
         productImages: images,
         productVideos: videos,
-        sellerName: seller.shopName,
         sellerID: seller._id,
         description,
         tags: tags.split(",").map((point) => point.trim()),

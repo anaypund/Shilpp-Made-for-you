@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +6,61 @@
     <title>Products - Admin Dashboard</title>
     <link rel="stylesheet" href="/static/css/styleAdmin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+    .admin-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0; top: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.25);
+        align-items: center; justify-content: center;
+        overflow-x: auto;
+    }
+    .admin-modal-content {
+        background: #fff;
+        border-radius: 14px;
+        max-width: 540px;
+        margin: 60px auto;
+        padding: 32px 28px 18px 28px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+        position: relative;
+        animation: fadeIn 0.3s;
+    }
+    .admin-modal-close {
+        position: absolute;
+        right: 18px; top: 12px;
+        font-size: 1.7em;
+        color: #888;
+        cursor: pointer;
+    }
+    .popup-section { margin-bottom: 18px; }
+    .form-group { margin-bottom: 12px; }
+    .btn-save-admin {
+        background: #6366f1;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 28px;
+        font-weight: 600;
+        font-size: 1em;
+        margin-top: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .btn-save-admin:hover { background: #4f46e5; }
+    .admin-remark-thread {
+        background: #f7f7fa;
+        border-radius: 6px;
+        padding: 6px 10px;
+        margin-bottom: 4px;
+        font-size: 0.97em;
+        color: #444;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(40px);}
+        to { opacity: 1; transform: translateY(0);}
+    }
+    </style>
 </head>
 <body class="admin-body">
     <div class="admin-sidebar">
@@ -74,10 +128,13 @@
                             <td><img src="{{this.imagePath}}" alt="{{this.productName}}" width="50"></td>
                             <td>{{this.productName}}</td>
                             <td>₹{{this.price}}</td>
-                            <td>{{this.sellerName}}</td>
+                            <td>{{this.sellerID.shopName}}</td>
                             <td>{{this.inventory}}</td>
                             <td>
                                 <a href="/admin/products/{{this._id}}" class="btn-view">View</a>
+                                <button class="btn-action" onclick="openProductPopup({{{json this}}})">
+                                    <i class="fas fa-tasks"></i> Action
+                                </button>
                             </td>
                         </tr>
                         {{/each}}
@@ -86,5 +143,135 @@
             </section>
         </div>
     </div>
+
+    <!-- Product Details Popup Modal -->
+    <div id="productPopup" class="admin-modal" style="display:none;">
+        <div class="admin-modal-content">
+            <span class="admin-modal-close" onclick="closeProductPopup()">&times;</span>
+            <div id="productPopupContent"></div>
+        </div>
+    </div>
+
+    <script>
+    function openProductPopup(product) {
+        // Format images
+        let imagesHtml = '';
+        if (product.productImages && product.productImages.length) {
+            imagesHtml = product.productImages.map(img =>
+                `<img src="${img}" alt="Product Image" style="max-width:90px;max-height:90px;margin:4px;border-radius:8px;border:1px solid #eee;">`
+            ).join('');
+        }
+        // Seller location
+        let sellerLocation = [product.sellerCity, product.sellerState, product.sellerCountry].filter(Boolean).join(', ');
+
+        // Admin remarks thread
+        let remarksHtml = '';
+        if (product.adminRemarks && Array.isArray(product.adminRemarks)) {
+            remarksHtml = product.adminRemarks.map(r =>
+                `<div class="admin-remark-thread"><span>${r.date ? new Date(r.date).toLocaleString() : ''}</span>: ${r.text}</div>`
+            ).join('');
+        } else if (product.adminRemarks) {
+            remarksHtml = `<div class="admin-remark-thread">${product.adminRemarks}</div>`;
+        }
+
+        document.getElementById('productPopupContent').innerHTML = `
+            <h3>${product.productName}</h3>
+            <div class="popup-section">
+                <div><strong>Product ID:</strong> ${product._id}</div>
+                <div><strong>Seller:</strong> ${product.sellerName}</div>
+                <div><strong>Seller Location:</strong> ${sellerLocation}</div>
+                <div><strong>Category:</strong> ${product.category || ''}</div>
+                <div><strong>SubCategory:</strong> ${product.subCategory || ''}</div>
+                <div><strong>Inventory:</strong> ${product.inventory}</div>
+                <div><strong>Description:</strong> ${product.description}</div>
+                <div style="margin:10px 0;">${imagesHtml}</div>
+            </div>
+            <hr>
+            <div class="popup-section">
+                <h4>Admin Section</h4>
+                <form id="adminProductForm" onsubmit="return saveAdminProduct('${product._id}')">
+                    <div class="form-group">
+                        <label>Selling Price</label>
+                        <input type="number" name="sellingPrice" value="${product.sellingPrice || ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Discount Type</label>
+                        <select name="discountType">
+                            <option value="percentage" ${product.discountType === 'percentage' ? 'selected' : ''}>Percentage</option>
+                            <option value="fixed" ${product.discountType === 'fixed' ? 'selected' : ''}>Fixed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Discount</label>
+                        <input type="number" name="discount" value="${product.discount || 0}" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="onSale" ${product.onSale ? 'checked' : ''}>
+                            On Sale
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Verification Status</label>
+                        <select name="isVerified">
+                            <option value="false" ${!product.isVerified ? 'selected' : ''}>Not Verified</option>
+                            <option value="true" ${product.isVerified ? 'selected' : ''}>Verified</option>
+                        </select>
+                    </div>
+                    <hr>
+                    <div>
+                        <h5>Admin Remarks</h5>
+                        <div id="adminRemarksThread" style="max-height:120px;overflow-y:auto;margin-bottom:8px;">
+                            ${remarksHtml || '<em>No remarks yet.</em>'}
+                        </div>
+                        <input type="text" name="adminRemark" placeholder="Add a remark..." style="width:80%;">
+                    </div>
+                    <button type="submit" class="btn-save-admin">Save</button>
+                </form>
+            </div>
+        `;
+        document.getElementById('productPopup').style.display = 'block';
+    }
+
+    function closeProductPopup() {
+        document.getElementById('productPopup').style.display = 'none';
+    }
+
+    // Example save handler (replace with AJAX as needed)
+    function saveAdminProduct(productId) {
+        const form = document.getElementById('adminProductForm');
+        const data = {
+            sellingPrice: form.sellingPrice.value,
+            discountType: form.discountType.value,
+            discount: form.discount.value,
+            onSale: form.onSale.checked,
+            isVerified: form.isVerified.value === "true",
+            adminRemark: form.adminRemark.value
+        };
+        fetch(`/admin/products/${productId}/admin-update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': window.csrfToken || '' // if you use CSRF protection
+            },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(resp => {
+            if(resp.success){
+                alert('Product updated successfully!');
+                closeProductPopup();
+                location.reload();
+            } else {
+                alert('Error: ' + (resp.error || 'Could not update product.'));
+            }
+        })
+        .catch(err => {
+            console.log('Error: ' + err.message);
+        });
+        return false; // Prevent form submit
+    }
+    </script>
+
 </body>
 </html>
