@@ -2225,18 +2225,18 @@ p {
 /* Seller Auth Layout */
 .seller-auth-wrapper {
   display: flex;
-  min-height: 90vh;
+  /* min-height: 90vh; */
   background: var(--color-background);
   border-radius: 24px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.07);
   overflow: hidden;
-  margin: 40px auto;
+  margin: 100px auto;
   max-width: 950px;
 }
 
 .seller-auth-form-section {
   flex: 1 1 0;
-  padding: 48px 36px;
+  padding: 30px 36px;
   background: var(--color-surface);
   display: flex;
   flex-direction: column;
@@ -2273,7 +2273,7 @@ p {
   .seller-auth-wrapper {
     flex-direction: column;
     max-width: 98vw;
-    margin: 10px auto;
+    margin: 100px auto;
   }
   .seller-auth-banner {
     display: none;
@@ -2403,6 +2403,61 @@ p {
   background: var(--color-hover);
   box-shadow: 0 4px 16px rgba(213,91,43,0.13);
   transform: translateY(-2px) scale(1.01);
+}
+
+/* Add to your style.css or in a <style> block */
+.auth-button.small {
+    background: #f3f3f3;
+    color: #444;
+    border: 1px solid #ddd;
+    font-size: 0.98em;
+    padding: 7px 18px;
+    border-radius: 7px;
+    margin-top: 2px;
+    margin-bottom: 0;
+    box-shadow: none;
+    transition: background 0.2s, color 0.2s;
+}
+.auth-button.small:disabled {
+    background: #eee;
+    color: #aaa;
+    cursor: not-allowed;
+}
+.otp-status {
+    font-size: 0.97em;
+    margin-top: 6px;
+    min-height: 22px;
+}
+.otp-status.error { color: #e75480; }
+.otp-status.success { color: #2eaf5c; }
+.otp-status.loading { color: #888; }
+.otp-timer {
+    font-size: 0.97em;
+    color: #888;
+    margin-left: 8px;
+}
+.spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    border-top: 2px solid #e75480;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+.auth-logo{
+    width: 10rem;
+    height: auto;
+    margin-bottom: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Error */

@@ -7,6 +7,8 @@ const { Console, log } = require("console");
 const session = require("express-session");
 require("dotenv").config();
 const crypto = require("crypto"); // Added for HMAC
+const admin = require("./firebase");
+
 
 const User = require("../models/User");
 const Order = require("../models/Order"); // Added Order model
@@ -73,23 +75,38 @@ routes.get("/signup", (req, res) => {
     res.render("signup");
 });
 
+
 routes.post("/signup", async (req, res) => {
-    try {
-        const { name, email, number, password } = req.body;
-        const existingUser = await User.findOne({ email });
+  const { name, email, number, password, idToken } = req.body;
 
-        if (existingUser) {
-            return res.render("signup", { error: "Email already exists" });
-        }
+  try {
+    // 1. Verify Firebase ID Token
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const phone = decodedToken.phone_number;
 
-        const user = new User({ name, email, number, password });
-        await user.save();
-
-        req.session.userId = user._id;
-        res.redirect("/");
-    } catch (error) {
-        res.render("signup", { error: "An error occurred" });
+    if (!phone || phone !== number) {
+      return res.render("signup", { error: "Phone verification failed. Please try again." });
     }
+
+    // 2. Check if user already exists
+    const existingUserMail = await User.findOne({ email });
+    const existingUserPhone = await User.findOne({ number });
+    if (existingUserMail || existingUserPhone) {
+      return res.render("signup", { error: "Account already exists" });
+    }
+
+    // 3. Save user to database
+    const user = new User({ name, email, number, password });
+    await user.save();
+
+    // 4. Create session
+    req.session.userId = user._id;
+
+    res.redirect("/");
+  } catch (error) {
+    console.error("Signup error:", error);
+    res.render("signup", { error: "An error occurred during signup." });
+  }
 });
 
 routes.get("/logout", (req, res) => {

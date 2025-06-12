@@ -5,18 +5,26 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{!-- <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script> --}}
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-auth-compat.js"></script>
 </head>
 <body>
-    <div class="seller-auth-wrapper">
+<div class="seller-auth-wrapper">
     <div class="seller-auth-form-section">
+    <img src="/static/images/SHILP INDIA with circle.png" alt="Shilp India" class="auth-logo animate-fadein">
         <div class="auth-header">
-            <h2 class="auth-heading animate-fadein">Create Account</h2>
+            {{!-- <h2 class="auth-heading animate-fadein">Create Account</h2> --}}
             <p class="auth-subtitle animate-slidein">Join our creative community today 🎨</p>
         </div>
+
         {{#if error}}
-            <div class="error">{{error}}</div>
+        <div class="error">{{error}}</div>
         {{/if}}
-        <form action="/signup" method="POST" class="auth-form">
+
+        <form id="signup-form" action="/signup" method="POST" class="auth-form">
             <div class="form-group">
                 <label for="name">Full Name</label>
                 <input type="text" id="name" name="name" placeholder="Enter your full name" required>
@@ -27,17 +35,148 @@
             </div>
             <div class="form-group">
                 <label for="number">Contact Number</label>
-                <input type="number" id="number" name="number" placeholder="Enter your phone number" required>
+                <input type="tel" id="phoneNumber" name="number" placeholder="+91XXXXXXXXXX" required>
+            </div>
+            <div class="form-group">
+                <button type="button" onclick="sendOTP()" class="auth-button small" id="sendOtpBtn">Send OTP</button>
+                <span id="otpTimer" class="otp-timer"></span>
+                <div id="recaptcha-container"></div>
+                <div id="otpStatus" class="otp-status"></div>
+            </div>
+            <div class="form-group">
+                <label for="otp">OTP</label>
+                <input type="text" id="otp" placeholder="Enter OTP" required disabled>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" placeholder="Create a password" required>
             </div>
+
+            <input type="hidden" name="idToken" id="idToken">
+
             <button type="submit" class="auth-button">Sign Up</button>
         </form>
+
         <p class="auth-redirect">Already have an account? <a href="/login">Login</a></p>
     </div>
 </div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyATHrU7J5LjZdEE98gngjGPpv20MkGhUDI",
+    authDomain: "shilp-india.firebaseapp.com",
+    projectId: "shilp-india",
+    storageBucket: "shilp-india.firebasestorage.app",
+    messagingSenderId: "856445290651",
+    appId: "1:856445290651:web:4cccd89f71d8dc2a1f5e3e",
+    measurementId: "G-2MX6BSN945"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  let recaptchaVerifier;
+  let confirmationResult;
+  let otpTimerInterval;
+  let otpTimerSeconds = 0;
+
+  window.onload = function () {
+    recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      size: 'invisible',
+      callback: function (response) {
+        console.log("reCAPTCHA solved");
+      }
+    });
+
+    // Ensure it's rendered properly
+    recaptchaVerifier.render().then(function (widgetId) {
+      console.log("reCAPTCHA rendered with widget ID:", widgetId);
+    });
+  };
+
+  function setOtpStatus(msg, type) {
+    const status = document.getElementById('otpStatus');
+    status.textContent = msg;
+    status.className = 'otp-status ' + (type || '');
+  }
+
+  function setOtpLoading(isLoading) {
+    const btn = document.getElementById('sendOtpBtn');
+    if (isLoading) {
+      btn.innerHTML = '<span class="spinner"></span>Sending...';
+      btn.disabled = true;
+    } else {
+      btn.innerHTML = 'Send OTP';
+      btn.disabled = false;
+    }
+  }
+
+  function startOtpTimer() {
+    otpTimerSeconds = 120;
+    const btn = document.getElementById('sendOtpBtn');
+    const timer = document.getElementById('otpTimer');
+    btn.disabled = true;
+    timer.textContent = ` (2:00)`;
+    otpTimerInterval = setInterval(() => {
+      otpTimerSeconds--;
+      const min = Math.floor(otpTimerSeconds / 60);
+      const sec = otpTimerSeconds % 60;
+      timer.textContent = ` (${min}:${sec < 10 ? '0' : ''}${sec})`;
+      if (otpTimerSeconds <= 0) {
+        clearInterval(otpTimerInterval);
+        timer.textContent = '';
+        btn.disabled = false;
+      }
+    }, 1000);
+  }
+
+  function sendOTP() {
+    setOtpStatus('', '');
+    setOtpLoading(true);
+
+    const phoneNumber = document.getElementById("phoneNumber").value;
+    if (!phoneNumber || phoneNumber.length < 10) {
+        setOtpLoading(false);
+        setOtpStatus("Please enter a valid phone number.", "error");
+        return;
+    }
+
+    auth.signInWithPhoneNumber(phoneNumber, recaptchaVerifier)
+        .then(result => {
+            confirmationResult = result;
+            setOtpLoading(false);
+            setOtpStatus("OTP sent successfully!", "success");
+            document.getElementById("otp").disabled = false; // Enable OTP input
+            startOtpTimer();
+        })
+        .catch(error => {
+            setOtpLoading(false);
+            setOtpStatus("Error sending OTP: " + error.message, "error");
+            document.getElementById("otp").disabled = true; // Keep OTP input disabled
+        });
+  }
+
+  document.getElementById("signup-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    setOtpStatus('', '');
+    const otp = document.getElementById("otp").value;
+    if (!otp) {
+        setOtpStatus("Please enter the OTP.", "error");
+        return;
+    }
+    setOtpStatus("Verifying OTP...", "loading");
+    confirmationResult.confirm(otp)
+        .then(async result => {
+            const idToken = await result.user.getIdToken();
+            document.getElementById("idToken").value = idToken;
+            setOtpStatus("OTP verified! Creating account...", "success");
+            this.submit(); // submit to backend
+        })
+        .catch(error => {
+            setOtpStatus("OTP verification failed: " + error.message, "error");
+        });
+});
+</script>
 
 </body>
 </html>
