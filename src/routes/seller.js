@@ -1,11 +1,12 @@
 const express = require("express");
-const router = express.Router();
+const routes = express.Router();
 const Seller = require("../models/Seller");
 const Product = require("../models/products");
 const Order = require("../models/Order");
 const SubOrder = require("../models/SubOrder");
 const multer = require("multer");
 const stream = require("stream");
+const admin = require("./firebase");
 
 // GCS Upload configuration
 const { Storage } = require('@google-cloud/storage');
@@ -56,7 +57,7 @@ const upload = multer({
 ]);
 
 // Serve static files from public directory
-router.use("/static", express.static("public"));
+routes.use("/static", express.static("public"));
 
 function checkFileType(file, cb) {
   const filetypes = /jpeg|jpg|png|gif/;
@@ -79,7 +80,7 @@ const isSellerAuthenticated = (req, res, next) => {
 };
 
 // Login routes
-router.get("/login", (req, res) => {
+routes.get("/login", (req, res) => {
   res.render("seller/login");
 });
 
@@ -104,7 +105,7 @@ const sellerUpload = multer({
 ]);
 
 // Registration route
-router.post("/register", sellerUpload, async (req, res) => {
+routes.post("/register", sellerUpload, async (req, res) => {
   try {
     const {
       name, email, password, shopName, phoneNumber, altNumber,
@@ -179,7 +180,7 @@ router.post("/register", sellerUpload, async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+routes.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const seller = await Seller.findOne({ email });
@@ -195,8 +196,87 @@ router.post("/login", async (req, res) => {
   }
 });
 
+routes.get("/reset-password", (req, res) => {
+    res.render("seller/reset-password-seller");
+});
+
+// POST /reset-password/check
+routes.post('/reset-password/check', async (req, res) => {
+    let { email, phone, countryCode } = req.body;
+    console.log("Reset Password Check:", email, phone);
+    const localNumber = phone.startsWith(countryCode)
+      ? phone.slice(countryCode.length)
+      : phone;
+
+    console.log(localNumber); 
+    try {
+        const user = await Seller.findOne({ email, phoneNumber: localNumber });
+        // console.log(user);
+        if (!user) {
+            return res.json({ success: false, error: "No user found with these details." });
+        }
+        // Optionally, mask phone for frontend
+        res.json({ success: true, phone: user.phoneNumber });
+    } catch (err) {
+        res.json({ success: false, error: "Server error." });
+    }
+});
+
+
+// POST /reset-password/verify-token
+routes.post('/reset-password/verify-token', async (req, res) => {
+    const { idToken } = req.body;
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const phone = decodedToken.phone_number;
+
+        if (!phone) {
+            return res.json({ success: false, error: "Invalid token: no phone number found." });
+        }
+
+        // You can attach this phone to session or return success to frontend
+        // Example: set in session for the password reset page
+        req.session.resetPhoneSeller = phone;
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error verifying ID token:', error);
+        res.status(401).json({ success: false, error: "Invalid or expired token." });
+    }
+});
+
+
+routes.post('/reset-password', async (req, res) => {
+    const { email, newPassword, countryCode } = req.body;
+    const phone = req.session.resetPhoneSeller;
+
+    if (!phone) {
+        return res.render('seller/reset-password-seller', { error: "Unauthorized attempt. Please verify OTP again." });
+    }
+
+     try {
+        const localNumber = phone.startsWith(countryCode)
+          ? phone.slice(countryCode.length)
+          : phone;
+
+        const user = await Seller.findOne({ email, phoneNumber: localNumber });
+        if (!user) {
+            return res.render('seller/reset-password-seller', { error: "Seller not found." });
+        }
+
+        user.password = newPassword; // ⚠️ ideally hash this!
+        await user.save();
+        req.session.resetPhoneSeller = null;
+
+
+        res.redirect('/seller/login?reset=success');
+    } catch (err) {
+        console.error(err);
+        res.render('seller/reset-password-seller', { error: "Server error." });
+    }
+});
+
 // Dashboard routes
-router.get("/dashboard", isSellerAuthenticated, async (req, res) => {
+routes.get("/dashboard", isSellerAuthenticated, async (req, res) => {
   try {
     const seller = await Seller.findById(req.session.sellerId);
     const products = await Product.find({ sellerID: req.session.sellerId });
@@ -216,7 +296,7 @@ router.get("/dashboard", isSellerAuthenticated, async (req, res) => {
 });
 
 // Product management routes
-router.post(
+routes.post(
   "/products/add",
   isSellerAuthenticated,
   upload,
@@ -284,7 +364,7 @@ router.post(
   }
 );
 
-router.post(
+routes.post(
   "/products/update/:id",
   isSellerAuthenticated,
   upload,
@@ -351,7 +431,7 @@ router.post(
 );
 
 // Delete product route
-router.delete(
+routes.delete(
   "/products/delete/:id",
   isSellerAuthenticated,
   async (req, res) => {
@@ -365,7 +445,7 @@ router.delete(
 );
 
 //Order Status Management
-router.post("/orders/update-status/:id", isSellerAuthenticated, async (req, res) => {
+routes.post("/orders/update-status/:id", isSellerAuthenticated, async (req, res) => {
   try {
     console.log("Updating order status for suborder ID:", req.params.id);
     console.log("New status:", req.body.status);
@@ -392,7 +472,7 @@ router.post("/orders/update-status/:id", isSellerAuthenticated, async (req, res)
   });
 
 // Ship to admin route
-router.post(
+routes.post(
   "/suborders/:id/ship-to-admin",
   isSellerAuthenticated,
   async (req, res) => {
@@ -441,4 +521,4 @@ async function uploadBufferToGCS(buffer, destination, mimetype) {
   });
 }
 
-module.exports = router;
+module.exports = routes;

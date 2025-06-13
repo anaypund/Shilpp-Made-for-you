@@ -10,6 +10,8 @@ const crypto = require("crypto"); // Added for HMAC
 const admin = require("./firebase");
 
 
+routes.use(express.json());
+
 const User = require("../models/User");
 const Order = require("../models/Order"); // Added Order model
 const Product = require("../models/products");
@@ -59,11 +61,11 @@ routes.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
-
+        
         if (!user || !(await user.comparePassword(password))) {
             return res.render("login", { error: "Invalid email or password" });
         }
-
+        
         req.session.userId = user._id;
         res.redirect("/");
     } catch (error) {
@@ -75,15 +77,14 @@ routes.get("/signup", (req, res) => {
     res.render("signup");
 });
 
-
 routes.post("/signup", async (req, res) => {
-  const { name, email, number, password, idToken } = req.body;
+    const { name, email, number, password, idToken } = req.body;
 
-  try {
+    try {
     // 1. Verify Firebase ID Token
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     const phone = decodedToken.phone_number;
-
+    
     if (!phone || phone !== number) {
       return res.render("signup", { error: "Phone verification failed. Please try again." });
     }
@@ -101,13 +102,84 @@ routes.post("/signup", async (req, res) => {
 
     // 4. Create session
     req.session.userId = user._id;
-
+    
     res.redirect("/");
   } catch (error) {
     console.error("Signup error:", error);
     res.render("signup", { error: "An error occurred during signup." });
   }
 });
+
+routes.get("/reset-password", (req, res) => {
+    res.render("reset-password.hbs");
+});
+
+// POST /reset-password/check
+routes.post('/reset-password/check', async (req, res) => {
+    let { email, phone } = req.body;
+    if (phone && phone.startsWith('+')) {
+        phone = phone.substring(1);
+    }
+    try {
+        const user = await User.findOne({ email, number: phone });
+        // console.log(user);
+        if (!user) {
+            return res.json({ success: false, error: "No user found with these details." });
+        }
+        // Optionally, mask phone for frontend
+        res.json({ success: true, phone: user.number });
+    } catch (err) {
+        res.json({ success: false, error: "Server error." });
+    }
+});
+
+
+// POST /reset-password/verify-token
+routes.post('/reset-password/verify-token', async (req, res) => {
+    const { idToken } = req.body;
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const phone = decodedToken.phone_number;
+
+        if (!phone) {
+            return res.json({ success: false, error: "Invalid token: no phone number found." });
+        }
+
+        // You can attach this phone to session or return success to frontend
+        // Example: set in session for the password reset page
+        req.session.resetPhone = phone;
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error verifying ID token:', error);
+        res.status(401).json({ success: false, error: "Invalid or expired token." });
+    }
+});
+
+
+routes.post('/reset-password', async (req, res) => {
+    const { email, newPassword } = req.body;
+    const phone = req.session.resetPhone;
+
+    if (!phone) {
+        return res.render('reset-password', { error: "Unauthorized attempt. Please verify OTP again." });
+    }
+
+     try {
+        const user = await User.findOne({ email, number: phone });
+        if (!user) {
+            return res.render('reset-password', { error: "User not found." });
+        }
+
+        user.password = newPassword; // ⚠️ ideally hash this!
+        await user.save();
+
+        res.redirect('/login?reset=success');
+    } catch (err) {
+        console.error(err);
+        res.render('reset-password', { error: "Server error." });
+    }
+});
+
 
 routes.get("/logout", (req, res) => {
     req.session.destroy();
