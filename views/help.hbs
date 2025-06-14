@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+    {{> head }}
+<body>
+    {{> navbar }}
+    {{> tabs }}
+
+
+    <div class="help-header">
+        <h1>Help & Support</h1>
+        <p>Find answers to common questions or contact us for further assistance.</p>
+    </div>
+
+    <section class="faq-section">
+        <h2 style="color: var(--color-primary); font-family: 'Marcellus', serif; margin-bottom: 24px;">Frequently Asked Questions</h2>
+        <div class="faq-list">
+            <div class="faq">
+                <button class="faq-question" type="button">
+                    How do I place an order?
+                    <span class="faq-toggle-icon">&#9654;</span>
+                </button>
+                <div class="faq-answer">
+                    Browse products, add your favorites to the cart, and proceed to checkout. Follow the on-screen instructions to complete your order.
+                </div>
+            </div>
+            <div class="faq">
+                <button class="faq-question" type="button">
+                    What payment methods are accepted?
+                    <span class="faq-toggle-icon">&#9654;</span>
+                </button>
+                <div class="faq-answer">
+                    We accept credit/debit cards, UPI, net banking, and select wallets for your convenience.
+                </div>
+            </div>
+            <div class="faq">
+                <button class="faq-question" type="button">
+                    How can I track my order?
+                    <span class="faq-toggle-icon">&#9654;</span>
+                </button>
+                <div class="faq-answer">
+                    After your order is shipped, you’ll receive a tracking link via email and SMS. You can also track orders from your profile page.
+                </div>
+            </div>
+            <div class="faq">
+                <button class="faq-question" type="button">
+                    Can I return or exchange a product?
+                    <span class="faq-toggle-icon">&#9654;</span>
+                </button>
+                <div class="faq-answer">
+                    Yes, you can request a return or exchange within 7 days of delivery, subject to our <a href="/return-policy">Return Policy</a>.
+                </div>
+            </div>
+            <div class="faq">
+                <button class="faq-question" type="button">
+                    How do I contact customer support?
+                    <span class="faq-toggle-icon">&#9654;</span>
+                </button>
+                <div class="faq-answer">
+                    Use the contact form below or email us at <a href="shilpindia25@gmail.com">shilpindia25@gmail.com</a>. We’re here to help!
+                </div>
+            </div>
+            <div class="faq">
+                <button class="faq-question" type="button">
+                    Are all products handmade?
+                    <span class="faq-toggle-icon">&#9654;</span>
+                </button>
+                <div class="faq-answer">
+                    Yes, most of the products on Shilp is handmade by talented artisans across India.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="contact-section">
+        <h2>Contact Us</h2>
+        <form class="auth-form" action="/help/contact" method="POST">
+            <div class="form-group">
+                <label for="contactName">Name</label>
+                <input type="text" id="contactName" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="contactEmail">Email</label>
+                <input type="email" id="contactEmail" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="contactMsg">Message</label>
+                <textarea id="contactMsg" name="message" required></textarea>
+            </div>
+            <button type="submit" class="submit-btn-help">Send Message</button>
+        </form>
+    </section>
+
+    <div class="support-info">
+        <h3 style="color: var(--color-primary); font-family: 'Marcellus', serif;">Need more help?</h3>
+        <p>
+            Email us at <a href="mailto:shilpindia25@gmail.com" style="color:var(--color-accent);">shilpindia25@gmail.com</a> 
+            {{!-- or call our helpline: <b style="color:var(--color-accent);">+91-9876543210</b> --}}
+        </p>
+    </div>
+
+    {{!-- <div class="policy-links">
+        <a href="/privacy-policy">Privacy Policy</a>
+        <a href="/terms">Terms of Service</a>
+        <a href="/return-policy">Return Policy</a>
+    </div> --}}
+
+    {{> footer }}
+
+    <script>
+        // FAQ retractable logic
+        document.querySelectorAll('.faq-question').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const faq = this.closest('.faq');
+                faq.classList.toggle('open');
+                // Close others
+                document.querySelectorAll('.faq').forEach(other => {
+                    if (other !== faq) other.classList.remove('open');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

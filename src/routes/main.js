@@ -8,6 +8,8 @@ const session = require("express-session");
 require("dotenv").config();
 const crypto = require("crypto"); // Added for HMAC
 const admin = require("./firebase");
+const nodemailer = require('nodemailer');
+
 
 
 routes.use(express.json());
@@ -78,26 +80,27 @@ routes.get("/signup", (req, res) => {
 });
 
 routes.post("/signup", async (req, res) => {
-    const { name, email, number, password, idToken } = req.body;
+    const { name, email, number, password, countryCode, idToken } = req.body;
 
     try {
     // 1. Verify Firebase ID Token
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     const phone = decodedToken.phone_number;
+    const numberWithCountryCode = `${countryCode}${number}`;
     
-    if (!phone || phone !== number) {
+    if (!phone || phone !== numberWithCountryCode) {
       return res.render("signup", { error: "Phone verification failed. Please try again." });
     }
 
     // 2. Check if user already exists
     const existingUserMail = await User.findOne({ email });
-    const existingUserPhone = await User.findOne({ number });
+    const existingUserPhone = await User.findOne({ numberWithCountryCode });
     if (existingUserMail || existingUserPhone) {
       return res.render("signup", { error: "Account already exists" });
     }
 
     // 3. Save user to database
-    const user = new User({ name, email, number, password });
+    const user = new User({ name, email, number: numberWithCountryCode, password });
     await user.save();
 
     // 4. Create session
@@ -242,7 +245,7 @@ routes.get("/", async (req, res) => {
 
         return {
             ...product.toObject(),
-            actualPrice: actualPrice.toFixed(2),
+            actualPrice: actualPrice.toFixed(0),
             price: price ? price.toFixed(2) : null,
             discountBadge
         };
@@ -316,6 +319,47 @@ routes.get('/filtered-products', async (req, res) => {
         });
     } catch (err) {
         res.status(500).send('Error loading products');
+    }
+});
+
+routes.get('/seller-products/:sellerId', async (req, res) => {
+    try {
+        const sellerId = req.params.sellerId;
+        const page = parseInt(req.query.page) || 1;
+        const limit = 15;
+        const skip = (page - 1) * limit;
+
+        const seller = await Seller.findById(sellerId);
+        if (!seller) return res.status(404).send('Seller not found');
+
+        const baseCondition = { isVerified: true, sellerID: sellerId };
+
+        const total = await Product.countDocuments(baseCondition);
+
+        const products = await Product.find(baseCondition)
+            .populate('sellerID')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const productsForView = products.map(p => ({
+            ...p.toObject(),
+            discountBadge: p.discount && p.discount > 0
+                ? (p.discountType === 'percentage'
+                    ? `-${p.discount}%`
+                    : `-₹${p.discount}`)
+                : null,
+            actualPrice: p.sellingPrice || p.price
+        }));
+
+        res.render('seller-products', {
+            products: productsForView,
+            seller,
+            page,
+            hasMore: total > page * limit
+        });
+    } catch (err) {
+        res.status(500).send('Error loading seller products');
     }
 });
 
@@ -870,5 +914,58 @@ routes.post("/create-cod-order", isAuthenticated, async (req, res) => {
         });
     }
 });
+
+// Show Help Page
+routes.get('/help', (req, res) => {
+    res.render('help');
+});
+
+routes.post('/contact', async (req, res) => {
+    const { name, email, message } = req.body;
+
+    // Setup Nodemailer transporter (your support email credentials)
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: 'shilpindia25@gmail.com',  // YOUR email
+            pass: 'your_app_password'              // App password (not your login password)
+        }
+    });
+
+    // Mail to you (admin/support)
+    const adminMail = {
+        from: `"${name}" <${email}>`,  // Looks like from user
+        to: 'shilpindia25@gmail.com', // Where you receive the queries
+        subject: `New Contact Query from ${name}`,
+        text: message,
+        html: `<p><strong>From:</strong> ${name} (${email})</p><p><strong>Message:</strong></p><p>${message}</p>`
+    };
+
+    // Confirmation mail to user
+    const userMail = {
+        from: '"Shilp India" shilpindia25@gmail.com', // From your brand
+        to: email,
+        subject: 'We have received your query!',
+        html: `
+            <p>Hi ${name},</p>
+            <p>Thank you for reaching out. We’ve received your message and will get back to you shortly.</p>
+            <hr />
+            <p><strong>Your Message:</strong></p>
+            <blockquote>${message}</blockquote>
+            <hr />
+            <p>Regards,<br>Team Shilp India</p>
+        `
+    };
+
+    try {
+        await transporter.sendMail(adminMail);
+        await transporter.sendMail(userMail);
+        res.status(200).json({ success: true, message: 'Message sent and confirmation mailed.' });
+    } catch (error) {
+        console.error('Email Error:', error);
+        res.status(500).json({ success: false, message: 'Could not send email.' });
+    }
+});
+
 
 module.exports = routes;

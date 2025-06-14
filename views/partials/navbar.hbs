@@ -1,4 +1,4 @@
-<header class="header">
+<header class="header" id="header">
     <div class="header-row">
         <a href="/" class="header-logo">
             <img src="/static/images/SHILP INDIA with circle.png" alt="Shilp India"/>
@@ -13,9 +13,11 @@
             {{#if user}}
                 <a href="/profile" class="user-greeting">Hello, {{split user.name " " 0}}</a>
                 <a href="/profile" class="auth-link"><i class="hgi hgi-stroke hgi-user"></i></a>
+                <a href="/help" class="auth-link"><i class="hgi hgi-stroke hgi-help-circle"></i></a>
                 <a href="/logout" class="auth-link"><i class="hgi hgi-stroke hgi-logout-03"></i></a>
             {{else}}
                 <a href="/login" class="auth-link"><i class="hgi hgi-stroke hgi-user"></i></a>
+                <a href="/help" class="auth-link"><i class="hgi hgi-stroke hgi-help-circle"></i></a>
             {{/if}}
         </div>
     </div>
