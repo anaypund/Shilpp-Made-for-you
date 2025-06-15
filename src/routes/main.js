@@ -10,6 +10,7 @@ const crypto = require("crypto"); // Added for HMAC
 const admin = require("./firebase");
 const nodemailer = require('nodemailer');
 
+const { applyDiscount } = require('../utils/priceUtils');
 
 
 routes.use(express.json());
@@ -300,16 +301,8 @@ routes.get('/filtered-products', async (req, res) => {
             .skip(skip)
             .limit(limit);
 
-        // Prepare products for template (add discountBadge, actualPrice, etc. if needed)
-        const productsForView = products.map(p => ({
-            ...p.toObject(),
-            discountBadge: p.discount && p.discount > 0
-                ? (p.discountType === 'percentage'
-                    ? `-${p.discount}%`
-                    : `-₹${p.discount}`)
-                : null,
-            actualPrice: p.sellingPrice || p.price
-        }));
+        // Apply discount logic just like other routes
+        const productsForView = products.map(p => applyDiscount(p.toObject()));
 
         res.render('filtered-products', {
             products: productsForView,
@@ -366,8 +359,9 @@ routes.get('/seller-products/:sellerId', async (req, res) => {
 
 routes.get("/product-details", async (req, res) => {
     const productId = req.query.id;
+
     try {
-        // Populate sellerID reference
+        // Fetch main product and populate seller
         const productArray = await Products.find({ _id: productId }).populate('sellerID');
         if (!productArray || productArray.length === 0) {
             return res.status(404).send("Product not found");
@@ -376,7 +370,7 @@ routes.get("/product-details", async (req, res) => {
         const product = productArray[0];
         const keyPoints = product.tags;
 
-        // --- DISCOUNT LOGIC ---
+        // --- DISCOUNT LOGIC for main product ---
         let actualPrice = product.sellingPrice;
         let price = null;
         let discountBadge = null;
@@ -395,10 +389,92 @@ routes.get("/product-details", async (req, res) => {
 
         const processedProduct = {
             ...product.toObject(),
-            actualPrice: actualPrice.toFixed(2),
+            actualPrice: actualPrice.toFixed(0),
             price: price ? price.toFixed(2) : null,
             discountBadge
         };
+
+        // --- Fetch Other Products by Seller ---
+        const sellerProductsRaw = await Products.aggregate([
+            {
+                $match: {
+                    sellerID: product.sellerID._id,
+                    _id: { $ne: product._id },
+                    isVerified: true
+                }
+            },
+            { $sample: { size: 10 } }
+        ]);
+
+        // --- Apply Discount Logic to sellerProducts ---
+        const sellerProducts = sellerProductsRaw.map(prod => {
+            let actualPrice = prod.sellingPrice;
+            let price = null;
+            let discountBadge = null;
+
+            if (prod.discount && prod.discount !== 0) {
+                if (prod.discountType === "percentage") {
+                    price = actualPrice;
+                    actualPrice = actualPrice - (actualPrice * prod.discount / 100);
+                    discountBadge = `-${prod.discount}% off`;
+                } else if (prod.discountType === "fixed") {
+                    price = actualPrice;
+                    actualPrice = actualPrice - prod.discount;
+                    discountBadge = `-₹${prod.discount} off`;
+                }
+            }
+
+            return {
+                ...prod,
+                actualPrice: actualPrice.toFixed(0),
+                price: price ? price.toFixed(2) : null,
+                discountBadge
+            };
+        });
+
+        // --- Fetch Similar Products ---
+        const similarProductsRaw = await Products.aggregate([
+            {
+                $match: {
+                    _id: { $ne: product._id },
+                    isVerified: true,
+                    $or: [
+                        { category: product.category },
+                        { subCategory: product.subCategory },
+                        { subSubCategory: product.subSubCategory },
+                        { tags: { $in: product.tags || [] } }
+                    ]
+                }
+            },
+            { $sample: { size: 10 } }
+        ]);
+
+        // --- Apply Discount Logic to similarProducts ---
+        const similarProducts = similarProductsRaw.map(prod => {
+            let actualPrice = prod.sellingPrice;
+            let price = null;
+            let discountBadge = null;
+
+            if (prod.discount && prod.discount !== 0) {
+                if (prod.discountType === "percentage") {
+                    price = actualPrice;
+                    actualPrice = actualPrice - (actualPrice * prod.discount / 100);
+                    discountBadge = `-${prod.discount}% off`;
+                } else if (prod.discountType === "fixed") {
+                    price = actualPrice;
+                    actualPrice = actualPrice - prod.discount;
+                    discountBadge = `-₹${prod.discount} off`;
+                }
+            }
+
+            return {
+                ...prod,
+                actualPrice: actualPrice.toFixed(2),
+                price: price ? price.toFixed(2) : null,
+                discountBadge
+            };
+        });
+
 
         const user = req.session.userId
             ? await User.findById(req.session.userId)
@@ -408,12 +484,18 @@ routes.get("/product-details", async (req, res) => {
             product: processedProduct,
             keyPoints: keyPoints,
             user: user,
-            seller: product.sellerID // Pass populated seller to frontend
+            seller: product.sellerID,
+            sellerProducts: sellerProducts,
+            similarProducts: similarProducts // ✅ passed to view
         });
+
+
     } catch (error) {
+        console.error(error);
         res.status(500).send("Product not found");
     }
 });
+
 
 routes.post("/cart", isAuthenticated, async (req, res) => {
     const productId = req.body.id;

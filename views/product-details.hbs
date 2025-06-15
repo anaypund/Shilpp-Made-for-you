@@ -28,6 +28,7 @@
 
             <div class="product-details">
                 <h1>{{product.productName}}</h1>
+                <a style="text-decoration:none;" href="/seller-products/{{seller._id}}"><h3>By, {{seller.shopName}}</h3></a>
                 <div class="price">
                     <span class="discounted-price">&#8377;{{product.actualPrice}}</span>
                     {{#if product.price}}
@@ -120,16 +121,86 @@
                                 <td style="padding:7px 10px;">{{product.careInstructions}}</td>
                             </tr>
                         {{/if}}
-                            <tr>
+                            {{!-- <tr>
                                 <td style="padding:7px 10px; font-weight:bold;">Tags</td>
                                 <td style="padding:7px 10px;color:#555;" colspan="2">&#8226;{{#each keyPoints}} {{this}}, {{/each}}</td>
-                            </tr>
+                            </tr> --}}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Seller's Other Products Slider -->
+<section class="seller-slider-section">
+    <h3 style="color: var(--color-primary); font-family: 'Marcellus', serif; margin-bottom: 18px;">
+        More from this Seller
+    </h3>
+    <div class="seller-product-slider">
+        {{#each sellerProducts}}
+            <form action="/product-details" method="GET" class="product-card" style="min-width: 220px; flex: 0 0 220px;">
+                <input type="hidden" name="id" value="{{this._id}}">
+                <button type="submit" style="all: unset; cursor: pointer; width: 100%;">
+                    <div class="product-card-image-wrapper">
+                        <img src="{{this.imagePath}}" alt="{{this.productName}}">
+                        {{#if this.discountBadge}}
+                            <span class="discount-badge">{{this.discountBadge}}</span>
+                        {{/if}}
+                    </div>
+                    <h4>{{this.productName}}</h4>
+                    <p class="price">
+                        <span class="discounted-price">&#8377;{{this.actualPrice}}</span>
+                        {{#if this.price}}
+                            <text class="original-price">&#8377;{{this.price}}</text>
+                        {{/if}}
+                    </p>
+                </button>
+            </form>
+        {{/each}}
+        <!-- Wildcard Card -->
+        <div class="product-card wildcard-card" style="min-width: 220px; flex: 0 0 220px; display: flex; align-items: center; justify-content: center; background: var(--color-surface); border: 2px dashed var(--color-accent); color: var(--color-accent); font-size: 1.2em; font-weight: 600; border-radius: 14px;">
+            <a href="/seller-products/{{seller._id}}" style="color: inherit; text-decoration: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                More similar &rarr;
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Similar Products Slider -->
+<section class="seller-slider-section">
+    <h3 style="color: var(--color-primary); font-family: 'Marcellus', serif; margin-bottom: 18px;">
+        Similar Products You May Like
+    </h3>
+    <div class="seller-product-slider">
+        {{#each similarProducts}}
+            <form action="/product-details" method="GET" class="product-card" style="min-width: 220px; flex: 0 0 220px;">
+                <input type="hidden" name="id" value="{{this._id}}">
+                <button type="submit" style="all: unset; cursor: pointer; width: 100%;">
+                    <div class="product-card-image-wrapper">
+                        <img src="{{this.imagePath}}" alt="{{this.productName}}">
+                        {{#if this.discountBadge}}
+                            <span class="discount-badge">{{this.discountBadge}}</span>
+                        {{/if}}
+                    </div>
+                    <h4>{{this.productName}}</h4>
+                    <p class="price">
+                        <span class="discounted-price">&#8377;{{this.actualPrice}}</span>
+                        {{#if this.price}}
+                            <text class="original-price">&#8377;{{this.price}}</text>
+                        {{/if}}
+                    </p>
+                </button>
+            </form>
+        {{/each}}
+        <!-- Wildcard Card -->
+        <div class="product-card wildcard-card" style="min-width: 220px; flex: 0 0 220px; display: flex; align-items: center; justify-content: center; background: var(--color-surface); border: 2px dashed var(--color-accent); color: var(--color-accent); font-size: 1.2em; font-weight: 600; border-radius: 14px;">
+            <a href="/filtered-products?search={{product.category}}" style="color: inherit; text-decoration: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                Explore more &rarr;
+            </a>
+        </div>
+    </div>
+</section>
 
 <!-- Cart Icon -->
     <div class="cart-icon">
