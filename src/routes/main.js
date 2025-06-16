@@ -587,7 +587,12 @@ routes.get("/checkout/payment", async (req, res) => {
         let shippingCharges = 100;
         let subTotal = 0;
         cartItems.forEach((item) => {
-            subTotal += item.productId.price * item.quantity;
+            if(item.productId.discountType === "percentage") {
+                sellPrice = item.productId.sellingPrice - (item.productId.sellingPrice * item.productId.discount / 100);
+            } else if(item.productId.discountType === "fixed") {
+                sellPrice = item.productId.sellingPrice - item.productId.discount;
+            }
+            subTotal += sellPrice * item.quantity;
         });
         const costumer = await Checkout.findOne({ userId: userId });
         if (
