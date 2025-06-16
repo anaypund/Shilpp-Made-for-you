@@ -96,11 +96,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ amount: document.getElementById('total').value, currency: 'INR', receipt: 'receipt#1' })
+                body: JSON.stringify({currency: 'INR', receipt: 'receipt#1' })
             });
             const order = await response.json();
             const options = {
-                key: 'rzp_test_TMlzfWIiuTjqpN',
+                key: 'rzp_live_0IqEWbEHSYcuGQ',
                 amount: order.amount,
                 currency: order.currency,
                 name: 'Shilpp',
