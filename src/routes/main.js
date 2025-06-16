@@ -346,7 +346,6 @@ routes.get('/seller-products/:sellerId', async (req, res) => {
                     ? `-${p.discount}%`
                     : `-₹${p.discount}`)
                 : null,
-            actualPrice: p.sellingPrice || p.price
         }));
 
         res.render('seller-products', {
@@ -705,7 +704,7 @@ routes.post("/create-order", async (req, res) => {
         let shippingCharges = 100;
         let subTotal = 0;
         cartItems.forEach((item) => {
-            subTotal += item.productId.price * item.quantity;
+            subTotal += item.productId.sellingPrice * item.quantity;
         });
         const customer = await Checkout.findOne({ userId });
         if (
@@ -831,7 +830,7 @@ routes.post("/verifyOrder", async (req, res) => {
 
             // Calculate total amount
             const totalAmount = cartItems.reduce(
-                (total, item) => total + (item.productId.price * item.quantity),
+                (total, item) => total + (item.productId.sellingPrice * item.quantity),
                 0
             );
 
@@ -868,7 +867,7 @@ routes.post("/verifyOrder", async (req, res) => {
                 items: cartItems.map(item => ({
                     productId: item.productId._id,
                     quantity: item.quantity,
-                    price: item.productId.price
+                    price: item.productId.sellingPrice
                 })),
                 totalAmount,
                 shippingAddress: {
@@ -975,7 +974,7 @@ routes.post("/create-cod-order", isAuthenticated, async (req, res) => {
             shippingCharges = 0;
         }
         const totalAmount = cartItems.reduce(
-            (total, item) => total + (item.productId.price * item.quantity),
+            (total, item) => total + (item.productId.sellingPrice * item.quantity),
             0
         ) + shippingCharges;
 
@@ -1011,7 +1010,7 @@ routes.post("/create-cod-order", isAuthenticated, async (req, res) => {
             items: cartItems.map(item => ({
                 productId: item.productId._id,
                 quantity: item.quantity,
-                price: item.productId.price
+                price: item.productId.sellingPrice
             })),
             totalAmount,
             shippingAddress: {

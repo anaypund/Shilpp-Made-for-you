@@ -53,6 +53,10 @@ hbs.registerHelper('json', function(context) {
   return JSON.stringify(context).replace(/"/g, '&quot;');
 });
 
+hbs.registerHelper('ifGreater', function (a, b, options) {
+  return (a > b) ? options.fn(this) : options.inverse(this);
+});
+
 mongoose.set('strictQuery', false);
 
 // const securePassword = async(password)=>{

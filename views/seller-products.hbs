@@ -26,10 +26,10 @@
                     </div>
                     <h4>{{this.productName}}</h4>
                     <p class="price">
-                        <span class="discounted-price">&#8377;{{this.actualPrice}}</span>
-                        {{#if this.price}}
-                            <text class="original-price">&#8377;{{this.price}}</text>
-                        {{/if}}
+                        <span class="discounted-price">&#8377;{{this.sellingPrice}}</span>
+                        {{#ifGreater this.actualPrice this.sellingPrice}}
+                            <text class="original-price">&#8377;{{this.actualPrice}}</text>
+                        {{/ifGreater}}
                     </p>
                 </button>
             </form>
