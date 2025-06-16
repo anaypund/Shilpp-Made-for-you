@@ -52,6 +52,7 @@ const isAuthenticated = (req, res, next) => {
     if (req.session.userId) {
         next();
     } else {
+        req.session.returnTo = req.originalUrl;
         res.redirect("/login");
     }
 };
@@ -70,7 +71,10 @@ routes.post("/login", async (req, res) => {
         }
         
         req.session.userId = user._id;
-        res.redirect("/");
+        
+        const redirectTo = req.session.returnTo || '/';
+        delete req.session.returnTo;
+        res.redirect(redirectTo);
     } catch (error) {
         res.render("login", { error: "An error occurred" });
     }
@@ -543,7 +547,7 @@ routes.get("/cart", isAuthenticated, async (req, res) => {
         );
         let total = 0;
         cartItems.forEach((item) => {
-            total += item.productId.price * item.quantity;
+            total += item.productId.sellingPrice * item.quantity;
         });
         console.log(total);
         res.render("cart", {

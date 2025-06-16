@@ -170,14 +170,15 @@ router.get('/products', isAdminAuthenticated, async (req, res) => {
 router.post('/products/:id/admin-update', async (req, res) => {
   console.log("Admin update request received for product ID:", req.params.id);
     try {
-        const { sellingPrice, discountType, discount, onSale, isVerified, adminRemark } = req.body;
+        const { actualPrice, discountType, discount, onSale, isVerified, adminRemark } = req.body;
         const update = {
-            sellingPrice,
+            actualPrice,
             discountType,
             discount,
             onSale,
             isVerified
         };
+        console.log("Update data:", update);
 
         // Handle admin remarks as a thread (array)
         const product = await Product.findById(req.params.id);
@@ -191,12 +192,21 @@ router.post('/products/:id/admin-update', async (req, res) => {
             });
         }
 
+        //Setup discounted price
+        let sellingPrice = actualPrice; // Default to actual price
+        if (discountType === 'percentage' && discount > 0) {
+            sellingPrice = actualPrice - (actualPrice * discount / 100);
+        } else if (discountType === 'fixed' && discount > 0) {
+            sellingPrice = actualPrice - discount;
+        }
+        product.sellingPrice = sellingPrice 
+
         // Update other fields
-        product.sellingPrice = sellingPrice;
         product.discountType = discountType;
         product.discount = discount;
         product.onSale = onSale;
         product.isVerified = isVerified;
+        product.actualPrice = actualPrice;
 
         await product.save();
         res.json({ success: true });
