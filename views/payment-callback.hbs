@@ -1,0 +1,47 @@
+<!-- payment-callback.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Verifying Payment...</title>
+</head>
+<body>
+  <h2>Processing your payment, please wait...</h2>
+  <script>
+    async function verifyPayment() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const payment_id = urlParams.get("razorpay_payment_id");
+      const order_id = urlParams.get("razorpay_order_id");
+      const signature = urlParams.get("razorpay_signature");
+
+      if (!payment_id || !order_id || !signature) {
+        alert("Invalid payment details");
+        return;
+      }
+
+      try {
+        const res = await fetch("/verifyOrder", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-razorpay-signature": signature
+          },
+          body: JSON.stringify({ payment_id, order_id })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = `/success?orderId=${data.orderId}`;
+        } else {
+          alert("Payment verification failed: " + data.message);
+        }
+      } catch (err) {
+        console.error("Error verifying payment:", err);
+        alert("Error verifying payment");
+      }
+    }
+
+    verifyPayment();
+  </script>
+</body>
+</html>

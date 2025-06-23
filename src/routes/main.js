@@ -23,6 +23,14 @@ const Seller = require("../models/Seller");
 const { Storage } = require('@google-cloud/storage');
 const path = require('path');
 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.SHILP_EMAIL_USER, // your email
+        pass: process.env.SHILP_EMAIL_PASS  // your app password 
+    }
+});
+
 // Auth using service account JSON key
 const storage = new Storage();
 
@@ -227,41 +235,53 @@ routes.use(bodyParser.urlencoded({ extended: true }));
 routes.use(bodyParser.json());
 routes.use("/static", express.static("public"));
 
+const shuffleArray = (array) => {
+    return array.sort(() => Math.random() - 0.5);
+};
+
 routes.get("/", async (req, res) => {
-    const products = await Products.find({ isVerified: true });
-    const user = req.session.userId ? await User.findById(req.session.userId) : null;
+    try {
+        const products = await Products.find({ isVerified: true });
+        const user = req.session.userId ? await User.findById(req.session.userId) : null;
 
-    const processedProducts = products.map(product => {
-        let actualPrice = product.sellingPrice;
-        let price = null;
-        let discountBadge = null;
+        // Shuffle products
+        const shuffledProducts = shuffleArray(products);
 
-        if (product.discount && product.discount !== 0) {
-            if (product.discountType === "percentage") {
-                price = actualPrice;
-                actualPrice = actualPrice - (actualPrice * product.discount / 100);
-                discountBadge = `-${product.discount}% off`;
-            } else if (product.discountType === "fixed") {
-                price = actualPrice;
-                actualPrice = actualPrice - product.discount;
-                discountBadge = `-₹${product.discount} off`;
+        const processedProducts = shuffledProducts.map(product => {
+            let actualPrice = product.sellingPrice;
+            let price = null;
+            let discountBadge = null;
+
+            if (product.discount && product.discount !== 0) {
+                if (product.discountType === "percentage") {
+                    price = actualPrice;
+                    actualPrice = actualPrice - (actualPrice * product.discount / 100);
+                    discountBadge = `-${product.discount}% off`;
+                } else if (product.discountType === "fixed") {
+                    price = actualPrice;
+                    actualPrice = actualPrice - product.discount;
+                    discountBadge = `-₹${product.discount} off`;
+                }
             }
-        }
 
-        return {
-            ...product.toObject(),
-            actualPrice: actualPrice.toFixed(0),
-            price: price ? price.toFixed(2) : null,
-            discountBadge
-        };
-    });
+            return {
+                ...product.toObject(),
+                actualPrice: actualPrice.toFixed(0),
+                price: price ? price.toFixed(2) : null,
+                discountBadge
+            };
+        });
 
-
-    res.status(200).render("index", {
-        Product: processedProducts,
-        user,
-    });
+        res.status(200).render("index", {
+            Product: processedProducts,
+            user,
+        });
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).send("Internal Server Error");
+    }
 });
+
 
 routes.get('/filtered-products', async (req, res) => {
     try {
@@ -738,74 +758,6 @@ routes.post("/create-order", async (req, res) => {
     }
 });
 
-// routes.get("/payment-callback", (req, res) => {
-//   res.render("payment-callback"); // or res.sendFile(...) if it's plain HTML
-// });
-
-
-// routes.post("/create-order", async (req, res) => {
-//   const { currency, receipt, userDetails } = req.body;
-//   const userId = req.session.userId;
-
-//   try {
-//     const cartItems = await CartItem.find({ userId }).populate("productId");
-
-//     let shippingCharges = 100;
-//     let subTotal = 0;
-
-//     cartItems.forEach((item) => {
-//       subTotal += item.productId.price * item.quantity;
-//     });
-
-//     const customer = await Checkout.findOne({ userId });
-//     if (customer && customer.state === "MH" && customer.city === "Amravati") {
-//       shippingCharges = 0;
-//     }
-
-//     const total = subTotal + shippingCharges;
-
-//     // Create Razorpay order
-//     const order = await razorpay.orders.create({
-//       amount: total * 100,
-//       currency,
-//       receipt,
-//       payment_capture: 1,
-//     });
-
-//     // Build Razorpay v2 preferences
-//     const preferences = {
-//       amount: order.amount,
-//       currency: order.currency,
-//       order_id: order.id,
-//       prefill: {
-//         name: userDetails.name,
-//         email: userDetails.email,
-//         contact: userDetails.contact,
-//       },
-//       redirect: {
-//         return_url: "http://127.0.0.1:8000//payment-callback?order_id=" + order.id
-//       },
-//       config: {
-//         display: {
-//           hide: [],
-//           preferences: {
-//             show_default_blocks: true
-//           }
-//         }
-//       },
-//       theme: {
-//         color: "#F37254"
-//       }
-//     };
-
-//     res.json({ preferences });
-//   } catch (error) {
-//     console.error("Error creating order:", error);
-//     res.status(500).json({ error: "Order creation failed", details: error.message });
-//   }
-// });
-
-
 routes.post("/verifyOrder", async (req, res) => {
     const { order_id, payment_id } = req.body;
     const razorpay_signature = req.headers["x-razorpay-signature"];
@@ -1080,15 +1032,19 @@ routes.get('/help', (req, res) => {
     res.render('help');
 });
 
-routes.post('/contact', async (req, res) => {
+routes.get('/policies', (req, res) => {
+    res.render('policies');
+});
+
+routes.post('/help/contact', async (req, res) => {
     const { name, email, message } = req.body;
 
     // Setup Nodemailer transporter (your support email credentials)
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: 'shilpindia25@gmail.com',  // YOUR email
-            pass: 'your_app_password'              // App password (not your login password)
+            user: process.env.SHILP_EMAIL_USER, // your email
+            pass: process.env.SHILP_EMAIL_PASS  // your app password 
         }
     });
 

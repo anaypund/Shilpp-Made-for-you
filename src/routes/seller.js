@@ -1,5 +1,6 @@
 const express = require("express");
 const routes = express.Router();
+const sharp = require('sharp');
 const Seller = require("../models/Seller");
 const Product = require("../models/products");
 const Order = require("../models/Order");
@@ -7,6 +8,7 @@ const SubOrder = require("../models/SubOrder");
 const multer = require("multer");
 const stream = require("stream");
 const admin = require("./firebase");
+const nodemailer = require('nodemailer');
 
 // GCS Upload configuration
 const { Storage } = require('@google-cloud/storage');
@@ -16,6 +18,14 @@ const path = require('path');
 const gcstorage = new Storage();
 
 const bucketName = 'shilp-media';
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.SHILP_EMAIL_USER, // your email
+    pass: process.env.SHILP_EMAIL_PASS  // your app password
+  }
+});
 
 async function uploadFile(localFilePath, destinationName) {
   await gcstorage.bucket(bucketName).upload(localFilePath, {
@@ -173,6 +183,63 @@ routes.post("/register", sellerUpload, async (req, res) => {
 
     await seller.save();
     req.session.sellerId = seller._id;
+    // Send email to seller
+    const sellerMailOptions = {
+      from: '"Shilp India" <shilpindia25@gmail.com>',
+      to: seller.email,
+      subject: 'Welcome to Shilp India! Your Seller Account is Ready 🎉',
+      html: `
+        <div style="font-family:Montserrat,sans-serif;max-width:600px;margin:auto;">
+          <h2 style="color:#5B1F1F;">Welcome to Shilp India, ${seller.name}!</h2>
+          <p>We're thrilled to have you join our creative community of artisans and makers.</p>
+          <p>Access your seller dashboard here: <a href="https://shilpindia.in/seller/dashboard">Seller Dashboard</a></p>
+          <p>
+            <b>What’s next?</b>
+            <ol>
+              <li>✨ <b>Create your first product</b> from your seller dashboard.</li>
+              <li>📝 <b>Submit your product for validation</b> so our team can review and list it on Shilp.</li>
+              <li>🚀 <b>Start selling</b> and reach customers across India!</li>
+            </ol>
+          </p>
+          <p>
+            If you need any help, reply to this email or reach out to our support team.<br>
+            <b>We’re here to help you grow!</b>
+          </p>
+          <p style="color:#7A7745;">Happy Selling,<br>The Shilp India Team</p>
+        </div>
+      `
+    };
+
+    // Send email to admin
+    const adminMailOptions = {
+      from: '"Shilp India" <support@shilp.com>',
+      to: 'shilpindia25@gmail.com', // replace with your admin email
+      subject: `New Seller Registered: ${seller.shopName} (${seller.email})`,
+      html: `
+        <div style="font-family:Montserrat,sans-serif;max-width:600px;margin:auto;">
+          <h3>New Seller Registration</h3>
+          <p>
+            <b>Name:</b> ${seller.name}<br>
+            <b>Email:</b> ${seller.email}<br>
+            <b>Shop Name:</b> ${seller.shopName}<br>
+            <b>Phone:</b> ${seller.phoneNumber}<br>
+            <b>Location:</b> ${seller.city}, ${seller.state}, ${seller.country}
+          </p>
+          <p>
+            Please review their documents and validate their account as needed.
+          </p>
+        </div>
+      `
+    };
+
+    // Send both emails (don't block registration if email fails)
+    transporter.sendMail(sellerMailOptions, (err, info) => {
+      if (err) console.error("Error sending seller welcome email:", err);
+    });
+    transporter.sendMail(adminMailOptions, (err, info) => {
+      if (err) console.error("Error sending admin notification email:", err);
+    });
+
     res.redirect("/seller/dashboard");
   } catch (error) {
     console.error(error);
@@ -309,12 +376,15 @@ routes.post(
       } = req.body;
       const seller = await Seller.findById(req.session.sellerId);
 
-      // Upload images to GCS
       const images = req.files['productImages']
         ? await Promise.all(req.files['productImages'].map(async (file) => {
-            const ext = path.extname(file.originalname);
-            const gcsName = `images/${file.fieldname}-${Date.now()}-${Math.round(Math.random()*1e9)}${ext}`;
-            return await uploadBufferToGCS(file.buffer, gcsName, file.mimetype);
+            // Convert to WebP
+            const webpBuffer = await sharp(file.buffer)
+              .webp({ quality: 85 }) // Set desired quality
+              .toBuffer();
+
+            const gcsName = `images/${file.fieldname}-${Date.now()}-${Math.round(Math.random()*1e9)}.webp`;
+            return await uploadBufferToGCS(webpBuffer, gcsName, 'image/webp');
           }))
         : [];
 
@@ -356,6 +426,63 @@ routes.post(
       });
 
       await product.save();
+
+      // Send email to seller
+      const sellerMailOptions = {
+        from: '"Shilp India" <shilpindia25@gmail.com>',
+        to: seller.email,
+        subject: 'Your Product Has Been Submitted for Review!',
+        html: `
+          <div style="font-family:Montserrat,sans-serif;max-width:600px;margin:auto;">
+            <h2 style="color:#5B1F1F;">Congratulations, ${seller.name}!</h2>
+            <p>Your product <b>${product.productName}</b> has been successfully submitted for review.</p>
+            <p>
+              <b>What happens next?</b>
+              <ol>
+                <li>🕵️‍♂️ Our team will review your product details and images for quality and compliance.</li>
+                <li>⏳ Once approved, your product will be listed on Shilp India and visible to customers.</li>
+                <li>🚀 You can track the status from your <a href="https://shilpindia.in/seller/dashboard">Seller Dashboard</a>.</li>
+              </ol>
+            </p>
+            <p>
+              If you have any questions, reply to this email or contact our support team.<br>
+              <b>Thank you for sharing your creativity with the world!</b>
+            </p>
+            <p style="color:#7A7745;">Warm regards,<br>The Shilp India Team</p>
+          </div>
+        `
+      };
+
+      // Send email to admin
+      const adminMailOptions = {
+        from: '"Shilp India" <shilpindia25@gmail.com>',
+        to: 'shilpindia25@gmail.com', // replace with your admin email
+        subject: `New Product Submitted: ${product.productName} by ${seller.shopName}`,
+        html: `
+          <div style="font-family:Montserrat,sans-serif;max-width:600px;margin:auto;">
+            <h3>New Product Submission</h3>
+            <p>
+              <b>Seller:</b> ${seller.name} (${seller.shopName})<br>
+              <b>Email:</b> ${seller.email}<br>
+              <b>Product:</b> ${product.productName}<br>
+              <b>Category:</b> ${product.category} / ${product.subCategory || ''} / ${product.subSubCategory || ''}<br>
+              <b>Price:</b> ₹${product.price}
+            </p>
+            <p>
+              Please review and validate this product for listing.
+            </p>
+          </div>
+        `
+      };
+
+      // Send both emails (don't block product add if email fails)
+      transporter.sendMail(sellerMailOptions, (err, info) => {
+        if (err) console.error("Error sending product submission email to seller:", err);
+      });
+      transporter.sendMail(adminMailOptions, (err, info) => {
+        if (err) console.error("Error sending product submission email to admin:", err);
+      });
+
       res.redirect("/seller/dashboard");
     } catch (error) {
       console.error(error);
@@ -376,7 +503,14 @@ routes.post(
         otherSpecs, careInstructions
       } = req.body;
 
+      // Fetch the original product before updating
+      const originalProduct = await Product.findById(req.params.id);
+      if (!originalProduct) {
+        return res.status(404).send("Product not found");
+      }
+
       const updateData = {
+        isVerified: false, // Reset verification status on update
         productName,
         price: Number(price),
         description,
@@ -404,9 +538,12 @@ routes.post(
       if (req.files && req.files['productImages'] && req.files['productImages'].length > 0) {
         updateData.productImages = await Promise.all(
           req.files['productImages'].map(async (file) => {
-            const ext = path.extname(file.originalname);
-            const gcsName = `images/${file.fieldname}-${Date.now()}-${Math.round(Math.random()*1e9)}${ext}`;
-            return await uploadBufferToGCS(file.buffer, gcsName, file.mimetype);
+            const webpBuffer = await sharp(file.buffer)
+              .webp({ quality: 85 })
+              .toBuffer();
+
+            const gcsName = `images/${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1e9)}.webp`;
+            return await uploadBufferToGCS(webpBuffer, gcsName, 'image/webp');
           })
         );
         updateData.imagePath = updateData.productImages[0];
@@ -422,6 +559,102 @@ routes.post(
       }
 
       await Product.findByIdAndUpdate(req.params.id, updateData);
+
+      // Fetch seller info
+      const seller = await Seller.findById(originalProduct.sellerID);
+
+      // Prepare old and new product details for seller email
+      function productDetailsTable(product) {
+        return `
+          <table style="border-collapse:collapse;">
+            <tr><td><b>Name:</b></td><td>${product.productName}</td></tr>
+            <tr><td><b>Price:</b></td><td>₹${product.price}</td></tr>
+            <tr><td><b>Category:</b></td><td>${product.category} / ${product.subCategory || ''} / ${product.subSubCategory || ''}</td></tr>
+            <tr><td><b>Description:</b></td><td>${product.description}</td></tr>
+            <tr><td><b>Tags:</b></td><td>${(product.tags || []).join(', ')}</td></tr>
+            <tr><td><b>Inventory:</b></td><td>${product.inventory}</td></tr>
+          </table>
+        `;
+      }
+
+      // Prepare changes table for admin email
+      function changesTable(oldP, newP) {
+        const fields = [
+          { key: 'productName', label: 'Name' },
+          { key: 'price', label: 'Price' },
+          { key: 'category', label: 'Category' },
+          { key: 'subCategory', label: 'SubCategory' },
+          { key: 'subSubCategory', label: 'SubSubCategory' },
+          { key: 'description', label: 'Description' },
+          { key: 'tags', label: 'Tags' },
+          { key: 'inventory', label: 'Inventory' }
+        ];
+        let rows = '';
+        fields.forEach(f => {
+          let oldVal = oldP[f.key];
+          let newVal = newP[f.key];
+          if (Array.isArray(oldVal)) oldVal = oldVal.join(', ');
+          if (Array.isArray(newVal)) newVal = newVal.join(', ');
+          if ((oldVal || '') !== (newVal || '')) {
+            rows += `<tr>
+              <td style="padding:4px 8px;">${f.label}</td>
+              <td style="padding:4px 8px; color:#a00;">${oldVal || '-'}</td>
+              <td style="padding:4px 8px; color:#080;">${newVal || '-'}</td>
+            </tr>`;
+          }
+        });
+        return rows
+          ? `<table border="1" style="border-collapse:collapse;"><tr><th>Field</th><th>Old</th><th>New</th></tr>${rows}</table>`
+          : '<p>No changes detected.</p>';
+      }
+
+      // Send email to seller
+      const sellerMailOptions = {
+        from: '"Shilp India" <shilpindia25@gmail.com>',
+        to: seller.email,
+        subject: 'Your Product Update is Submitted for Review!',
+        html: `
+          <div style="font-family:Montserrat,sans-serif;max-width:600px;margin:auto;">
+            <h2 style="color:#5B1F1F;">Hi ${seller.name},</h2>
+            <p>Your product <b>${originalProduct.productName}</b> has been updated and submitted for review.</p>
+            <p><b>Previous Details:</b>${productDetailsTable(originalProduct)}</p>
+            <p><b>Updated Details:</b>${productDetailsTable({ ...originalProduct.toObject(), ...updateData })}</p>
+            <p style="color:#5B1F1F;"><b>Note:</b> These changes will be validated by our team very soon. Until then, your product is temporarily delisted and will not be visible to customers.</p>
+            <p>If you have any questions, reply to this email or contact our support team.<br>
+            <b>Thank you for keeping your product information up to date!</b></p>
+            <p style="color:#7A7745;">Warm regards,<br>The Shilp India Team</p>
+          </div>
+        `
+      };
+
+      // Send email to admin
+      const adminMailOptions = {
+        from: '"Shilp India" <shilpindia25@gmail.com>',
+        to: 'shilpindia25@gmail.com', // replace with your admin email
+        subject: `Product Updated: ${originalProduct.productName} by ${seller.shopName}`,
+        html: `
+          <div style="font-family:Montserrat,sans-serif;max-width:600px;margin:auto;">
+            <h3>Product Update Submitted</h3>
+            <p>
+              <b>Seller:</b> ${seller.name} (${seller.shopName})<br>
+              <b>Email:</b> ${seller.email}<br>
+              <b>Product:</b> ${originalProduct.productName}
+            </p>
+            <h4>Changed Fields:</h4>
+            ${changesTable(originalProduct, { ...originalProduct.toObject(), ...updateData })}
+            <p>Please review and validate these changes for listing.</p>
+          </div>
+        `
+      };
+
+      // Send both emails (don't block update if email fails)
+      transporter.sendMail(sellerMailOptions, (err, info) => {
+        if (err) console.error("Error sending product update email to seller:", err);
+      });
+      transporter.sendMail(adminMailOptions, (err, info) => {
+        if (err) console.error("Error sending product update email to admin:", err);
+      });
+
       res.redirect("/seller/dashboard");
     } catch (error) {
       console.error(error);

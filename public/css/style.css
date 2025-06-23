@@ -692,9 +692,10 @@ h1{
 /* Product Section */
 .products {
     display: flex;
+    justify-content: center;
     flex-wrap: wrap;
-    gap: 25px;
-    padding: 20px;
+    gap: 8px;
+    padding: 8px;
     background-color: var(--color-text-light);
 }
 
@@ -703,7 +704,7 @@ h1{
     border: 1px solid var(--color-border);
     /* border-radius: 8px; */
     padding: 5px;
-    width: calc(20% - 20px);
+    width: calc(20% - 8px);
     /* Default: three cards per row */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -769,18 +770,18 @@ p {
 }
 
 .product-card:hover {
-    transform: scale(1.05);
+    transform: scale(1.01);
     transition: 0.3s ease;
 }
 
 /* Responsive styling for smaller screens */
 @media (max-width: 768px) {
     .products {
-        gap: 20px;
+        gap: 5px;
     }
 
     .product-card {
-        width: calc(50% - 10px);
+        width: calc(50% - 3px);
         /* Two cards per row for screens 768px and below */
     }
 

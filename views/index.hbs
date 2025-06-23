@@ -6,7 +6,12 @@
     {{> tabs }}
 
     <section class="banner-carousel">
-        <div class="carousel-slide active" style="background-image: url('./static/images/Resin\ Earrings\ \(Pack\ of\ 2\).png');">
+        {{!-- <div class="carousel-slide active">
+            <img src="./static/images/Welcome to ShilpIndia.gif" alt="">
+            {{!-- <div class="overlay"></div>
+            <h2>Unique Finds, Made by Hand</h2> --}}
+        </div> --}}
+        <div class="carousel-slide active" style="background-image: url('./static/images/Welcome to ShilpIndia.gif');">
             <div class="overlay"></div>
             <h2>Unique Finds, Made by Hand</h2>
         </div>
@@ -73,7 +78,7 @@
             products.forEach(product => {
                 if (filter === 'All' || product.category === filter || product.keywords.includes(filter.toLowerCase())) {
                     const productCard = `
-                        <form action="/product-details" method="GET" class="product-card">
+                        <form action="/product-details" method="GET" class="product-card animate-slidein">
                             <input type="hidden" name="id" value="${product._id}">
                             <button type="submit" style="all: unset; cursor: pointer; width: 100%;">
                                 <div class="product-card-image-wrapper">
