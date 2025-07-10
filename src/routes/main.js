@@ -19,6 +19,7 @@ const User = require("../models/User");
 const Order = require("../models/Order"); // Added Order model
 const Product = require("../models/products");
 const Seller = require("../models/Seller");
+const SubOrder = require('../models/SubOrder');
 
 const { Storage } = require('@google-cloud/storage');
 const path = require('path');
@@ -842,7 +843,6 @@ routes.post("/verifyOrder", async (req, res) => {
             }
 
             // Create sub-orders for each seller
-            const SubOrder = require('../models/SubOrder');
             for (const [sellerId, items] of Object.entries(itemsBySeller)) {
                 const subOrderTotal = items.reduce((sum, item) => 
                     sum + (item.quantity * item.productId.price), 0);
@@ -868,6 +868,149 @@ routes.post("/verifyOrder", async (req, res) => {
             }
 
             await CartItem.deleteMany({ userId });
+
+
+            // Fetch user and sellers for emails
+            const user = await User.findById(userId);
+            const sellersMap = {};
+            for (const item of cartItems) {
+                if (!sellersMap[item.productId.sellerID]) {
+                    sellersMap[item.productId.sellerID] = await Seller.findById(item.productId.sellerID);
+                }
+            }
+
+            // --- 1. Email to User ---
+            const orderItemsHtml = cartItems.map(item => `
+                <tr>
+                    <td>${item.productId.productName}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹${item.productId.sellingPrice}</td>
+                    <td>₹${item.productId.sellingPrice * item.quantity}</td>
+                </tr>
+            `).join('');
+
+            const userMail = {
+                from: '"Shilp India" <shilpindia25@gmail.com>',
+                to: user.email,
+                subject: 'Your Order is Confirmed! 🎉',
+                html: `
+                    <div style="font-family:Montserrat,sans-serif;max-width:600px;margin:auto;">
+                        <h2 style="color:#5B1F1F;">Thank you for your order, ${user.name}!</h2>
+                        <p>Your order <b>#${savedOrder._id}</b> has been placed successfully.</p>
+                        <h3>Order Details:</h3>
+                        <table border="1" style="border-collapse:collapse;width:100%;">
+                            <tr>
+                                <th>Product</th><th>Qty</th><th>Price</th><th>Total</th>
+                            </tr>
+                            ${orderItemsHtml}
+                        </table>
+                        <p><b>Total Amount:</b> ₹${savedOrder.totalAmount}</p>
+                        <p><b>Shipping Address:</b><br>
+                            ${customer.address}, ${customer.city}, ${customer.state}, ${customer.country} - ${customer.pinCode}
+                        </p>
+                        <p>We will notify you when your order is shipped.<br>Thank you for shopping with Shilp India!</p>
+                    </div>
+                `
+            };
+            transporter.sendMail(userMail, (err) => {
+                if (err) console.error("Error sending order confirmation to user:", err);
+            });
+
+            // --- 2. Email to Sellers for their Suborders ---
+            const subOrders = await SubOrder.find({ mainOrderId: savedOrder._id }).populate('items.productId');
+            for (const subOrder of subOrders) {
+                const seller = sellersMap[subOrder.sellerId];
+                if (!seller) continue;
+                const subOrderItemsHtml = subOrder.items.map(item => `
+                    <tr>
+                        <td>${item.productId.productName}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${item.price}</td>
+                        <td>₹${item.price * item.quantity}</td>
+                    </tr>
+                `).join('');
+                const sellerMail = {
+                    from: '"Shilp India" <shilpindia25@gmail.com>',
+                    to: seller.email,
+                    subject: `New Order Received! Order #${savedOrder._id}`,
+                    html: `
+                        <div style="font-family:Montserrat,sans-serif;max-width:600px;margin:auto;">
+                            <h2 style="color:#e75480;">You have a new order!</h2>
+                            <p>Order <b>#${savedOrder._id}</b> has been placed and includes your products.</p>
+                            <h3>Suborder Details:</h3>
+                            <table border="1" style="border-collapse:collapse;width:100%;">
+                                <tr>
+                                    <th>Product</th><th>Qty</th><th>Price</th><th>Total</th>
+                                </tr>
+                                ${subOrderItemsHtml}
+                            </table>
+                            <p><b>Total for you:</b> ₹${subOrder.totalAmount}</p>
+                            <p>Please process and ship the order by <b>${subOrder.deadline.toLocaleDateString()}</b>.</p>
+                        </div>
+                    `
+                };
+                transporter.sendMail(sellerMail, (err) => {
+                    if (err) console.error(`Error sending order email to seller ${seller.email}:`, err);
+                });
+            }
+
+            // --- 3. Email to Admin ---
+            const subOrdersHtml = subOrders.map(subOrder => {
+                const seller = sellersMap[subOrder.sellerId];
+                const itemsHtml = subOrder.items.map(item => `
+                    <tr>
+                        <td>${item.productId.productName}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${item.price}</td>
+                        <td>₹${item.productId.sellingPrice}</td>
+                        <td>₹${item.price * item.quantity}</td>
+                    </tr>
+                `).join('');
+                return `
+                    <h4>Seller: ${seller ? seller.shopName : subOrder.sellerId}</h4>
+                    <table border="1" style="border-collapse:collapse;width:100%;margin-bottom:10px;">
+                        <tr>
+                            <th>Product</th><th>Qty</th><th>Price</th><th>Selling Price</th><th>Total</th>
+                        </tr>
+                        ${itemsHtml}
+                    </table>
+                    <b>Suborder Total:</b> ₹${subOrder.totalAmount}<br>
+                    <b>Deadline:</b> ${subOrder.deadline.toLocaleDateString()}<br>
+                    <hr>
+                `;
+            }).join('');
+
+            const adminMail = {
+                from: '"Shilp India" <shilpindia25@gmail.com>',
+                to: 'shilpindia25@gmail.com', // your admin email
+                subject: `New Order Placed: #${savedOrder._id}`,
+                html: `
+                    <div style="font-family:Montserrat,sans-serif;max-width:700px;margin:auto;">
+                        <h2>New Order Placed</h2>
+                        <h3>User Details:</h3>
+                        <p>
+                            <b>Name:</b> ${user.name}<br>
+                            <b>Email:</b> ${user.email}<br>
+                            <b>Phone:</b> ${user.number}<br>
+                            <b>Shipping Address:</b> ${customer.address}, ${customer.city}, ${customer.state}, ${customer.country} - ${customer.pinCode}
+                        </p>
+                        <h3>Order Details:</h3>
+                        <table border="1" style="border-collapse:collapse;width:100%;">
+                            <tr>
+                                <th>Product</th><th>Qty</th><th>Price</th><th>Total</th>
+                            </tr>
+                            ${orderItemsHtml}
+                        </table>
+                        <p><b>Total Amount:</b> ₹${savedOrder.totalAmount}</p>
+                        <h3>Suborders:</h3>
+                        ${subOrdersHtml}
+                    </div>
+                `
+            };
+            transporter.sendMail(adminMail, (err) => {
+                if (err) console.error("Error sending order confirmation to admin:", err);
+            });
+
 
             res.json({
                 success: true,
@@ -984,7 +1127,6 @@ routes.post("/create-cod-order", isAuthenticated, async (req, res) => {
         }
 
         // Create sub-orders for each seller
-        const SubOrder = require('../models/SubOrder');
         for (const [sellerId, items] of Object.entries(itemsBySeller)) {
             const subOrderTotal = items.reduce((sum, item) => 
                 sum + (item.quantity * item.productId.price), 0);
@@ -1010,6 +1152,149 @@ routes.post("/create-cod-order", isAuthenticated, async (req, res) => {
         }
 
         await CartItem.deleteMany({ userId });
+
+        // Fetch user and sellers for emails
+        const user = await User.findById(userId);
+        const sellersMap = {};
+        for (const item of cartItems) {
+            if (!sellersMap[item.productId.sellerID]) {
+                sellersMap[item.productId.sellerID] = await Seller.findById(item.productId.sellerID);
+            }
+        }
+
+        // --- 1. Email to User ---
+        const orderItemsHtml = cartItems.map(item => `
+            <tr>
+                <td>${item.productId.productName}</td>
+                <td>${item.quantity}</td>
+                <td>₹${item.productId.sellingPrice}</td>
+                <td>₹${item.productId.sellingPrice * item.quantity}</td>
+            </tr>
+        `).join('');
+
+        const userMail = {
+            from: '"Shilp India" <shilpindia25@gmail.com>',
+            to: user.email,
+            subject: 'Your Order is Confirmed! 🎉',
+            html: `
+                <div style="font-family:Montserrat,sans-serif;max-width:600px;margin:auto;">
+                    <h2 style="color:#5B1F1F;">Thank you for your order, ${user.name}!</h2>
+                    <p>Your order <b>#${savedOrder._id}</b> has been placed successfully.</p>
+                    <h3>Order Details:</h3>
+                    <table border="1" style="border-collapse:collapse;width:100%;">
+                        <tr>
+                            <th>Product</th><th>Qty</th><th>Price</th><th>Total</th>
+                        </tr>
+                        ${orderItemsHtml}
+                    </table>
+                    <p><b>Total Amount:</b> ₹${savedOrder.totalAmount}</p>
+                    <p><b>Shipping Address:</b><br>
+                        ${customer.address}, ${customer.city}, ${customer.state}, ${customer.country} - ${customer.pinCode}
+                    </p>
+                    <p>We will notify you when your order is shipped.<br>Thank you for shopping with Shilp India!</p>
+                </div>
+            `
+        };
+        transporter.sendMail(userMail, (err) => {
+            if (err) console.error("Error sending order confirmation to user:", err);
+        });
+
+        // --- 2. Email to Sellers for their Suborders ---
+        const subOrders = await SubOrder.find({ mainOrderId: savedOrder._id }).populate('items.productId');
+        for (const subOrder of subOrders) {
+            const seller = sellersMap[subOrder.sellerId];
+            if (!seller) continue;
+            const subOrderItemsHtml = subOrder.items.map(item => `
+                <tr>
+                    <td>${item.productId.productName}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹${item.price}</td>
+                    <td>₹${item.price * item.quantity}</td>
+                </tr>
+            `).join('');
+            const sellerMail = {
+                from: '"Shilp India" <shilpindia25@gmail.com>',
+                to: seller.email,
+                subject: `New Order Received! Order #${savedOrder._id}`,
+                html: `
+                    <div style="font-family:Montserrat,sans-serif;max-width:600px;margin:auto;">
+                        <h2 style="color:#e75480;">You have a new order!</h2>
+                        <p>Order <b>#${savedOrder._id}</b> has been placed and includes your products.</p>
+                        <h3>Suborder Details:</h3>
+                        <table border="1" style="border-collapse:collapse;width:100%;">
+                            <tr>
+                                <th>Product</th><th>Qty</th><th>Price</th><th>Total</th>
+                            </tr>
+                            ${subOrderItemsHtml}
+                        </table>
+                        <p><b>Total for you:</b> ₹${subOrder.totalAmount}</p>
+                        <p>Please process and ship the order by <b>${subOrder.deadline.toLocaleDateString()}</b>.</p>
+                    </div>
+                `
+            };
+            transporter.sendMail(sellerMail, (err) => {
+                if (err) console.error(`Error sending order email to seller ${seller.email}:`, err);
+            });
+        }
+
+        // --- 3. Email to Admin ---
+        const subOrdersHtml = subOrders.map(subOrder => {
+            const seller = sellersMap[subOrder.sellerId];
+            const itemsHtml = subOrder.items.map(item => `
+                <tr>
+                    <td>${item.productId.productName}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹${item.price}</td>
+                    <td>₹${item.productId.sellingPrice}</td>
+                    <td>₹${item.price * item.quantity}</td>
+                </tr>
+            `).join('');
+            return `
+                <h4>Seller: ${seller ? seller.shopName : subOrder.sellerId}</h4>
+                <table border="1" style="border-collapse:collapse;width:100%;margin-bottom:10px;">
+                    <tr>
+                        <th>Product</th><th>Qty</th><th>Price</th><th>Selling Price</th><th>Total</th>
+                    </tr>
+                    ${itemsHtml}
+                </table>
+                <b>Suborder Total:</b> ₹${subOrder.totalAmount}<br>
+                <b>Deadline:</b> ${subOrder.deadline.toLocaleDateString()}<br>
+                <hr>
+            `;
+        }).join('');
+
+        const adminMail = {
+            from: '"Shilp India" <shilpindia25@gmail.com>',
+            to: 'shilpindia25@gmail.com', // your admin email
+            subject: `New Order Placed: #${savedOrder._id}`,
+            html: `
+                <div style="font-family:Montserrat,sans-serif;max-width:700px;margin:auto;">
+                    <h2>New Order Placed</h2>
+                    <h3>User Details:</h3>
+                    <p>
+                        <b>Name:</b> ${user.name}<br>
+                        <b>Email:</b> ${user.email}<br>
+                        <b>Phone:</b> ${user.number}<br>
+                        <b>Payment Type:</b> ${savedOrder.paymentMethod}<br>
+                        <b>Payment ID:</b> ${savedOrder.paymentId}<br>
+                        <b>Shipping Address:</b> ${customer.address}, ${customer.city}, ${customer.state}, ${customer.country} - ${customer.pinCode}
+                    </p>
+                    <h3>Order Details:</h3>
+                    <table border="1" style="border-collapse:collapse;width:100%;">
+                        <tr>
+                            <th>Product</th><th>Qty</th><th>Price</th><th>Total</th>
+                        </tr>
+                        ${orderItemsHtml}
+                    </table>
+                    <p><b>Total Amount:</b> ₹${savedOrder.totalAmount}</p>
+                    <h3>Suborders:</h3>
+                    ${subOrdersHtml}
+                </div>
+            `
+        };
+        transporter.sendMail(adminMail, (err) => {
+            if (err) console.error("Error sending order confirmation to admin:", err);
+        });
 
         res.json({
             success: true,
