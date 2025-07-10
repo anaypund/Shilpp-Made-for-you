@@ -72,7 +72,7 @@ mongoose.set('strictQuery', false);
 const port= process.env.PORT || 8000
 const start=async () =>{
 try {
-    connectDB(process.env.MONGO_URI)
+    await connectDB(process.env.MONGO_URI)
     console.log('Connected to database!')
     // Product.deleteMany()
     // Product.create(jsonProduct)
