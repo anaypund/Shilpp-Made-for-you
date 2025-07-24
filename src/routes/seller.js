@@ -378,15 +378,19 @@ routes.post(
 
       const images = req.files['productImages']
         ? await Promise.all(req.files['productImages'].map(async (file) => {
-            // Convert to WebP
+            // Resize + compress to WebP
             const webpBuffer = await sharp(file.buffer)
-              .webp({ quality: 85 }) // Set desired quality
+              .resize({ width: 800 }) // Resize width to 800px
+              .webp({ quality: 60 }) // More aggressive compression
               .toBuffer();
+
+            console.log(`Compressed image size: ${(webpBuffer.length / 1024).toFixed(2)} KB`);
 
             const gcsName = `images/${file.fieldname}-${Date.now()}-${Math.round(Math.random()*1e9)}.webp`;
             return await uploadBufferToGCS(webpBuffer, gcsName, 'image/webp');
           }))
         : [];
+
 
       // Upload videos to GCS
       const videos = req.files['productVideos']
@@ -539,8 +543,11 @@ routes.post(
         updateData.productImages = await Promise.all(
           req.files['productImages'].map(async (file) => {
             const webpBuffer = await sharp(file.buffer)
-              .webp({ quality: 85 })
+              .resize({ width: 800 }) // Resize width to 800px
+              .webp({ quality: 60 }) // More aggressive compression
               .toBuffer();
+
+            console.log(`Compressed image size: ${(webpBuffer.length / 1024).toFixed(2)} KB`);
 
             const gcsName = `images/${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1e9)}.webp`;
             return await uploadBufferToGCS(webpBuffer, gcsName, 'image/webp');

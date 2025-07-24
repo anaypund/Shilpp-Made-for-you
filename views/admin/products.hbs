@@ -112,7 +112,7 @@
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>Product ID</th>
+                            <th>Is Verified</th>
                             <th>Image</th>
                             <th>Name</th>
                             <th>Price</th>
@@ -124,7 +124,7 @@
                     <tbody>
                         {{#each products}}
                         <tr>
-                            <td>{{this._id}}</td>
+                            <td>{{this.isVerified}}</td>
                             <td><img src="{{this.imagePath}}" alt="{{this.productName}}" width="50"></td>
                             <td>{{this.productName}}</td>
                             <td>₹{{this.price}}</td>
@@ -178,6 +178,7 @@
             <h3>${product.productName}</h3>
             <div class="popup-section">
                 <div><strong>Product ID:</strong> ${product._id}</div>
+                <div><strong>Is Verified:</strong> ${product.isVerified}</div>
                 <div><strong>Seller:</strong> ${product.sellerName}</div>
                 <div><strong>Seller Location:</strong> ${sellerLocation}</div>
                 <div><strong>Category:</strong> ${product.category || ''}</div>
