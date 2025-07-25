@@ -5,32 +5,13 @@
     {{> navbar }}
     {{> tabs }}
 
-    <section class="banner-carousel">
-        {{!-- <div class="carousel-slide active">
-            <img src="./static/images/Welcome to ShilpIndia.gif" alt="">
-            {{!-- <div class="overlay"></div>
-            <h2>Unique Finds, Made by Hand</h2> --}}
-        </div> --}}
-        <div class="carousel-slide active" style="background-image: url('./static/images/Welcome to ShilpIndia.gif');">
-            <div class="overlay"></div>
-            <h2>Unique Finds, Made by Hand</h2>
-        </div>
-        <div class="carousel-slide" style="background-image: url('./static/images/Rose\ Agate\ Timepiece\ Resin\ Wall\ Clock.png');">
-            <div class="overlay"></div>
-            <h2>Discover Beautiful Handmade Creations</h2>
-        </div>
-        <div class="carousel-slide" style="background-image: url('./static/images/Resin\ Earring.png');">
-            <div class="overlay"></div>
-            <h2>Treasures Crafted Just for You</h2>
-        </div>
-        <div class="carousel-slide" style="background-image: url('./static/images/Sun\ Moon\ Scented\ Candles.png');">
-            <div class="overlay"></div>
-            <h2>Crafted with Heart, Inspired by You</h2>
-        </div>
-        <div class="carousel-slide" style="background-image: url('./static/images/Resin\ Candle\ Holder.png');">
-            <div class="overlay"></div>
-            <h2>Made with Passion, Loved by All</h2>
-        </div>
+  
+
+    <section class="banner">
+        <a href="/filtered-products?search=rakhi"><div class="slide pc" style="background-image: url('/static/images/Rakhi Banner.jpeg');">
+        </div></a>
+        <a href="/filtered-products?search=rakhi"><div class="slide mobile" style="background-image: url('/static/images/Rakhi Banner Vertical.jpeg');">
+        </div></a>
     </section>
 
 
@@ -101,19 +82,26 @@
 
         populateProducts(); // Initial load of products
 
+        try{
+            const slides = document.querySelectorAll('.carousel-slide');
+            let currentSlide = 0;
 
-        const slides = document.querySelectorAll('.carousel-slide');
-        let currentSlide = 0;
+            function changeSlide(direction) {
+                if(slides.length === 0) {
+                    console.error("No slides found in the carousel.");
+                    return;
+                }
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (currentSlide + direction + slides.length) % slides.length;
+                slides[currentSlide].classList.add('active');
+            }
 
-
-        function changeSlide(direction) {
-            slides[currentSlide].classList.remove('active');
-            currentSlide = (currentSlide + direction + slides.length) % slides.length;
-            slides[currentSlide].classList.add('active');
+            // Optional: Auto-slide every 5 seconds
+            //setInterval(() => changeSlide(1), 3000);
+        } catch (error) {
+            console.error("Error initializing carousel:", error);
         }
-
-        // Optional: Auto-slide every 5 seconds
-        setInterval(() => changeSlide(1), 3000);
+        
 
     </script>
 </body>

@@ -761,4 +761,59 @@ async function uploadBufferToGCS(buffer, destination, mimetype) {
   });
 }
 
+routes.get("/test", async (req, res) => {
+  const sharp = require('sharp');
+
+  const storage = new Storage();
+  const bucketName = 'shilp-media';
+  const imagePrefix = 'images/';
+  const backupPrefix = 'backup-images/';
+
+  async function optimizeAndBackupImages() {
+    const [files] = await storage.bucket(bucketName).getFiles({ prefix: imagePrefix });
+
+    for (const file of files) {
+      const fileName = file.name;
+
+      // Skip directories and non-images
+      if (!fileName.match(/\.(jpg|jpeg|png|webp)$/i)) {
+        console.log(`Skipping: ${fileName}`);
+        continue;
+      }
+
+      console.log(`🔄 Processing: ${fileName}`);
+
+      try {
+        // Step 1: Backup original
+        const backupName = fileName.replace(imagePrefix, backupPrefix);
+        await file.copy(storage.bucket(bucketName).file(backupName));
+        console.log(`📦 Backup created at: ${backupName}`);
+
+        // Step 2: Download original image
+        const [originalBuffer] = await file.download();
+
+        // Step 3: Optimize with sharp
+        const optimizedBuffer = await sharp(originalBuffer)
+          .resize({ width: 800 }) // Resize width (optional)
+          .webp({ quality: 60 })   // Compress quality
+          .toBuffer();
+
+        // Step 4: Overwrite original
+        await file.save(optimizedBuffer, {
+          metadata: {
+            contentType: 'image/webp',
+          },
+        });
+
+        console.log(`✅ Optimized and overwritten: ${fileName}`);
+      } catch (err) {
+        console.error(`❌ Error processing ${fileName}:`, err.message);
+      }
+    }
+  }
+
+  // optimizeAndBackupImages().catch(console.error);
+
+})
+
 module.exports = routes;
