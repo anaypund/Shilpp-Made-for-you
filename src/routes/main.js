@@ -320,11 +320,13 @@ routes.get('/filtered-products', async (req, res) => {
         const total = await Product.countDocuments(query);
 
         // Get products for this page
-        const products = await Product.find(query)
+        let products = await Product.find(query)
             .populate('sellerID')
-            .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
+
+        // Shuffle the products
+        products = products.sort(() => Math.random() - 0.5);
 
         // Apply discount logic just like other routes
         const productsForView = products.map(p => applyDiscount(p.toObject()));
