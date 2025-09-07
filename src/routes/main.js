@@ -23,6 +23,7 @@ const Product = require("../models/products");
 const Seller = require("../models/Seller");
 const SubOrder = require('../models/SubOrder');
 const CMS = require('../models/CMS');
+const Coupon = require('../models/Coupon');
 
 const { Storage } = require('@google-cloud/storage');
 const path = require('path');
@@ -658,7 +659,7 @@ routes.post("/cart/update", isAuthenticated, async (req, res) => {
     }
 });
 
-routes.get("/checkout/payment", async (req, res) => {
+routes.get("/checkout/payment", isAuthenticated, async (req, res) => {
     const userId = req.session.userId; // Use session userId instead of query parameter
     try {
         const cartItems = await CartItem.find({ userId: userId }).populate(
@@ -667,11 +668,16 @@ routes.get("/checkout/payment", async (req, res) => {
         let shippingCharges = 100;
         let subTotal = 0;
         cartItems.forEach((item) => {
+            let sellPrice = item.productId.sellingPrice;
             if(item.productId.discountType === "percentage") {
                 sellPrice = item.productId.sellingPrice - (item.productId.sellingPrice * item.productId.discount / 100);
+                item.sellingPrice = sellPrice;
             } else if(item.productId.discountType === "fixed") {
                 sellPrice = item.productId.sellingPrice - item.productId.discount;
+                item.sellingPrice = sellPrice;
             }
+            item.sellingPrice = sellPrice;
+            item.onSale = (item.productId.onSale === true || item.productId.onSale === "true");
             subTotal += sellPrice * item.quantity;
         });
         const costumer = await Checkout.findOne({ userId: userId });
@@ -699,6 +705,37 @@ routes.get("/checkout/payment", async (req, res) => {
     } catch (error) {
         console.error("Error fetching cart items:", error);
         res.status(500).send("Server Error");
+    }
+});
+
+routes.post("/apply-coupon", isAuthenticated, async (req, res) => {
+    const { couponCode } = req.body;
+    const userId = req.session.userId;
+    try {
+        const coupon = await Coupon.findOne({ code: couponCode });
+        if (!coupon) {
+            return res.status(404).json({ success: false, message: "Coupon not found" });
+        }
+        if (coupon.expiryDate < Date.now()) {
+            return res.status(400).json({ success: false, message: "Coupon has expired" });
+        }
+        const cartItems = await CartItem.find({ userId: userId }).populate("productId");
+        let total = 0;
+        cartItems.forEach((item) => {
+            actualPrice = applyDiscount(item.productId).actualPrice;
+            total += actualPrice * item.quantity;
+        });
+        let discount = 0;
+        if (coupon.discountType === "percentage") {
+            discount = (total * coupon.value) / 100;
+        } else if (coupon.discountType === "fixed") {
+            discount = coupon.value;
+        }
+        total -= discount;
+        res.json({ success: true, newTotal: total, discountAmount: discount, couponCode: coupon.code });
+    } catch (error) {
+        console.error("Error applying coupon:", error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
 });
 
@@ -792,7 +829,9 @@ routes.post("/create-order", async (req, res) => {
             shippingCharges = 0;
         }
         const total = subTotal + shippingCharges;
-
+        console.log("Subtotal (in INR):", subTotal);
+        console.log("Shipping charges (in INR):", shippingCharges);
+        console.log("Total amount (in INR):", total);
         try {
             const order = await razorpay.orders.create({
                 amount: total * 100,

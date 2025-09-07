@@ -1470,6 +1470,16 @@ p {
     margin-right: 20px;
 }
 
+.old-price { 
+    text-decoration: line-through;
+    color: gray;
+}
+.new-price { 
+    font-weight: bold;
+    color: green;
+}
+
+
 /* Product Details */
 .cart-item-details {
     flex: 1;

@@ -15,11 +15,19 @@
                 <img src="{{this.productId.imagePath}}" alt="{{this.productId.productName}}">
                 <div class="cart-item-details">
                     <h3>{{this.productId.productName}}</h3>
-                    <p>Price: ₹{{this.productId.sellingPrice}}</p>
+                    <p>Price: <span class="old-price">₹{{this.productId.sellingPrice}}</span> <span class="new-price">₹{{this.sellingPrice}}</span></p>
+                    
+                    {{!-- <p>Price: ₹{{this.sellingPrice}}</p> --}}
+
                     <p>Quantity: {{this.quantity}}</p>
                 </div>
             </div>
             {{/each}}
+            <div class="form-group">
+                <label for="couponCode">Have a coupon?</label>
+                <input type="text" id="couponCode" name="couponCode" placeholder="Enter coupon code">
+                <button type="button" id="applyCouponBtn">Apply</button>
+            </div>
         </div>
 
         <!-- Total Section -->
@@ -33,6 +41,9 @@
         <span>Tax (10%)</span>
         <span>₹{{tax}}</span>
     </div> --}}
+    <div class="total-breakdown" id="couponBreakDown">
+
+    </div>
     <div class="total-breakdown">
         <span>Shipping</span>
         <span>₹{{shippingCharges}}</span>
@@ -87,6 +98,29 @@ document.addEventListener('DOMContentLoaded', function () {
             payBtn.textContent = 'Place Order';
         }
     });
+
+    const applyCouponBtn = document.getElementById('applyCouponBtn');
+    applyCouponBtn.onclick = async function () {
+        const couponCode = document.getElementById('couponCode').value;
+        const response = await fetch('/apply-coupon', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ couponCode })
+        });
+        const data = await response.json();
+        if (data.success) {
+            alert('Coupon applied successfully!');
+            // Update the total price displayed
+            const couponBreakDown = document.getElementById('couponBreakDown');
+            couponBreakDown.innerHTML = `<span>Coupon (${data.couponCode})</span><span>-₹${data.discountAmount}</span>`;
+            document.querySelector('.total-price').textContent = '₹' + (data.newTotal + {{shippingCharges}});
+            document.getElementById('total').value = data.newTotal + {{shippingCharges}}; // Update hidden total input
+        } else {
+            alert('Failed to apply coupon: ' + data.message);
+        }
+    };
 
     payBtn.onclick = async function () {
         if (currentMethod === 'online') {
