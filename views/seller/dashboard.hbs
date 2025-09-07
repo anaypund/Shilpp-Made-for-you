@@ -122,8 +122,28 @@
                         <div class="order-items">
                             {{#each this.items}}
                             <div class="order-item">
-                                <span>{{this.productId.productName}} × {{this.quantity}}</span>
-                                <span>₹{{this.price}}</span>
+                                <div class="order-item-title">
+                                    <span>{{this.productId.productName}} × {{this.quantity}}</span>
+                                    <span>₹{{this.price}}</span>
+                                </div>
+                                <div>
+                                    {{#if this.customizeImage}}
+                                    {{#each this.customizeImage}}
+                                        <a href="{{this}}" download>
+                                        <button class="download-btn"><i class="fa-solid fa-download"></i></button>
+                                        </a>
+                                    {{/each}}
+                                    {{/if}}
+                                </div>
+
+                                {{#if this.customizeText}}
+                                <div class="custom-text">
+                                    {{#each this.customizeText}}
+                                    <p>Custom Text: {{this}}</p>
+                                    {{/each}}
+                                </div>
+                                {{/if}}
+
                             </div>
                             {{/each}}
                         </div>

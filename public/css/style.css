@@ -297,13 +297,6 @@ a{
     color: #1976d2;
 }
 
-.order-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--color-border);
-}
-
 .order-total {
     margin-top: 10px;
     text-align: right;
@@ -349,6 +342,14 @@ a{
     display: flex;
     justify-content: space-between;
     padding: 5px 0;
+    border-bottom: 1px solid var(--color-border);
+    flex-direction: column;
+}
+
+.order-item-title{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 .order-footer {
