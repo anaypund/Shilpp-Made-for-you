@@ -409,8 +409,7 @@ router.post('/CMS/update', isAdminAuthenticated, upload.fields([
             ? await Promise.all(req.files['bannerImageMobile'].map(async (file) => {
                 // Resize + compress to WebP
                 const webpBuffer = await sharp(file.buffer)
-                  .resize({ width: 800 }) // Resize width to 800px
-                  .webp({ quality: 60 }) // More aggressive compression
+                  .webp({ quality: 80 }) // More aggressive compression
                   .toBuffer();
     
                 console.log(`Compressed image size: ${(webpBuffer.length / 1024).toFixed(2)} KB`);
