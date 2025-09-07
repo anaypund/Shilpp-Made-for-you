@@ -52,14 +52,6 @@ const productSchema = mongoose.Schema({
         required: false, // Optional field for products that are not customizable
         default: 'none'
     },
-    customizeImage: {
-        type: String,
-        required: false, // Optional field for products that are not customizable
-    },
-    customizeText: {
-        type: String,
-        required: false, // Optional field for products that are not customizable
-    },
     isVerified: {
         type: Boolean,
         required: true,

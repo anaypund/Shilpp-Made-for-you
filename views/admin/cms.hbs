@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Shilpp</title>
+    <link rel="stylesheet" href="/static/css/styleAdmin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body class="admin-body">
+    {{> admin/sidebar }}
+    <main class="admin-main">
+        <h1>CMS Management</h1>
+        <form action="/admin/CMS/update" method="POST" enctype="multipart/form-data">
+            <div class="cms-form-group">
+                <label for="bannerImagePC">Banner Image (PC)</label>
+                <input type="file" id="bannerImagePC" name="bannerImagePC" accept="image/*">
+                <img src="{{cmsData.indexPage.bannerImage.pc.url}}" alt="Banner Image (PC)" class="preview-image">
+            </div>
+            <div class="cms-form-group">
+                <label for="bannerImagePCTag">Banner Image (PC) - Tag</label>
+                <input type="text" id="bannerImagePCTag" name="bannerImagePCTag" value="{{cmsData.indexPage.bannerImage.pc.tag}}" required>
+            </div>
+            <div class="cms-form-group">
+                <label for="bannerImageMobile">Banner Image (Mobile)</label>
+                <input type="file" id="bannerImageMobile" name="bannerImageMobile" accept="image/*">
+                <img src="{{cmsData.indexPage.bannerImage.mobile.url}}" alt="Banner Image (Mobile)" class="preview-image">
+            </div>
+            <div class="cms-form-group">
+                <label for="bannerImageMobileTag">Banner Image (Mobile) - Tag</label>
+                <input type="text" id="bannerImageMobileTag" name="bannerImageMobileTag" value="{{cmsData.indexPage.bannerImage.mobile.tag}}" required>
+            </div>
+            <button type="submit">Update CMS</button>
+        </form>
+    </main>
+</body>
+</html>

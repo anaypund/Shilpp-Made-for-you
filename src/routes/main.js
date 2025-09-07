@@ -9,6 +9,8 @@ require("dotenv").config();
 const crypto = require("crypto"); // Added for HMAC
 const admin = require("./firebase");
 const nodemailer = require('nodemailer');
+const multer = require("multer");
+const os = require("os");
 
 const { applyDiscount } = require('../utils/priceUtils');
 
@@ -20,6 +22,7 @@ const Order = require("../models/Order"); // Added Order model
 const Product = require("../models/products");
 const Seller = require("../models/Seller");
 const SubOrder = require('../models/SubOrder');
+const CMS = require('../models/CMS');
 
 const { Storage } = require('@google-cloud/storage');
 const path = require('path');
@@ -45,8 +48,24 @@ async function uploadFile(localFilePath, destinationName) {
     },
   });
   console.log(`Uploaded ${localFilePath} as ${destinationName}`);
+  return `https://storage.googleapis.com/${bucketName}/${destinationName}`;
 }
 
+// Multer config for memory storage (for direct upload to GCS)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 30 * 1024 * 1024 }, // 30MB per file
+  fileFilter: function (req, file, cb) {
+    const filetypes = /jpeg|jpg|png|gif|webp/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed!"));
+    }
+  },
+});
 
 routes.use(
     session({
@@ -219,6 +238,7 @@ routes.get("/profile", isAuthenticated, async (req, res) => {
         res.status(500).send("Error loading profile");
     }
 });
+
 const Razorpay = require("razorpay");
 const { RAZORPAY_ID_KEY, RAZORPAY_SECRET_KEY } = process.env;
 
@@ -244,6 +264,7 @@ routes.get("/", async (req, res) => {
     try {
         const products = await Products.find({ isVerified: true });
         const user = req.session.userId ? await User.findById(req.session.userId) : null;
+        const cmsData = await CMS.findOne();
 
         // Shuffle products
         const shuffledProducts = shuffleArray(products);
@@ -276,6 +297,7 @@ routes.get("/", async (req, res) => {
         res.status(200).render("index", {
             Product: processedProducts,
             user,
+            cmsData: cmsData || {}
         });
     } catch (error) {
         console.error("Error fetching products:", error);
@@ -522,42 +544,74 @@ routes.get("/product-details", async (req, res) => {
     }
 });
 
+// Helper to upload buffer to GCS and return public URL
+async function uploadBufferToGCS(buffer, destinationName, mimetype) {
+  const file = storage.bucket(bucketName).file(destinationName);
+  await file.save(buffer, {
+    metadata: {
+      contentType: mimetype,
+      cacheControl: 'public, max-age=31536000',
+    },
+    validation: 'md5',
+  });
+  // With uniform bucket-level access, we just need the direct Cloud Storage URL
+  return `https://storage.googleapis.com/${bucketName}/${destinationName}`;
+}
 
-routes.post("/cart", isAuthenticated, async (req, res) => {
-    const productId = req.body.id;
-    const userId = req.session.userId;
-    try {
-        const product = await Products.findById(productId);
-        if (!product || product.inventory <= 0) {
-            return res.status(400).send("Product is out of stock");
-        }
-
-        let cartItem = await CartItem.findOne({
-            userId: userId,
-            productId: productId,
-        });
-
-        if (cartItem) {
-            // Check if increasing quantity exceeds inventory
-            if (cartItem.quantity + 1 > product.inventory) {
-                return res.status(400).send("Not enough inventory available");
-            }
-            cartItem.quantity += 1;
-            await cartItem.save();
-        } else {
-            cartItem = new CartItem({
-                userId: userId,
-                productId: productId,
-                quantity: 1,
-            });
-            await cartItem.save();
-        }
-        console.log("Added to cart");
-        res.redirect("/cart");
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Error adding to cart");
+routes.post("/cart", isAuthenticated, upload.array("customizationImage", 5), async (req, res) => {
+  const productId = req.body.id;
+  const userId = req.session.userId;
+  try {
+    const product = await Products.findById(productId);
+    if (!product || product.inventory <= 0) {
+      return res.status(400).send("Product is out of stock");
     }
+
+    // Handle custom text (can be single or array)
+    let customizeText = req.body.customizationText;
+    if (customizeText && !Array.isArray(customizeText)) customizeText = [customizeText];
+
+    // Handle custom images
+    let customizeImage = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const ext = path.extname(file.originalname);
+        const gcsName = `customizations/${userId}/${Date.now()}-${Math.random().toString(36).substring(2,8)}${ext}`;
+        const url = await uploadBufferToGCS(file.buffer, gcsName, file.mimetype);
+        customizeImage.push(url);
+      }
+    }
+
+    let cartItem = await CartItem.findOne({
+      userId: userId,
+      productId: productId,
+      customizeText: customizeText || [],
+      customizeImage: customizeImage || [],
+    });
+
+    if (cartItem) {
+      // Check if increasing quantity exceeds inventory
+      if (cartItem.quantity + 1 > product.inventory) {
+        return res.status(400).send("Not enough inventory available");
+      }
+      cartItem.quantity += 1;
+      await cartItem.save();
+    } else {
+      cartItem = new CartItem({
+        userId: userId,
+        productId: productId,
+        quantity: 1,
+        customizeText: customizeText || [],
+        customizeImage: customizeImage || [],
+      });
+      await cartItem.save();
+    }
+    console.log("Added to cart");
+    res.redirect("/cart");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error adding to cart");
+  }
 });
 
 routes.get("/cart", isAuthenticated, async (req, res) => {
@@ -822,7 +876,9 @@ routes.post("/verifyOrder", async (req, res) => {
                 items: cartItems.map(item => ({
                     productId: item.productId._id,
                     quantity: item.quantity,
-                    price: item.productId.sellingPrice
+                    price: item.productId.sellingPrice,
+                    customizeImage: item.customizeImage || [],
+                    customizeText: item.customizeText || [],
                 })),
                 totalAmount,
                 shippingAddress: {
@@ -848,7 +904,6 @@ routes.post("/verifyOrder", async (req, res) => {
             for (const [sellerId, items] of Object.entries(itemsBySeller)) {
                 const subOrderTotal = items.reduce((sum, item) => 
                     sum + (item.quantity * item.productId.price), 0);
-                
                 // Calculate deadline (3 days from now)
                 const deadline = new Date();
                 deadline.setDate(deadline.getDate() + 3);
@@ -859,7 +914,9 @@ routes.post("/verifyOrder", async (req, res) => {
                     items: items.map(item => ({
                         productId: item.productId._id,
                         quantity: item.quantity,
-                        price: item.productId.price
+                        price: item.productId.price,
+                        customizeImage: item.customizeImage || [],
+                        customizeText: item.customizeText || [],
                     })),
                     totalAmount: subOrderTotal,
                     status: "processing",
@@ -1107,7 +1164,9 @@ routes.post("/create-cod-order", isAuthenticated, async (req, res) => {
             items: cartItems.map(item => ({
                 productId: item.productId._id,
                 quantity: item.quantity,
-                price: item.productId.sellingPrice
+                price: item.productId.sellingPrice,
+                customizeImage: item.customizeImage || [],
+                customizeText: item.customizeText || [],
             })),
             totalAmount,
             shippingAddress: {
@@ -1132,7 +1191,6 @@ routes.post("/create-cod-order", isAuthenticated, async (req, res) => {
         for (const [sellerId, items] of Object.entries(itemsBySeller)) {
             const subOrderTotal = items.reduce((sum, item) => 
                 sum + (item.quantity * item.productId.price), 0);
-            
             // Calculate deadline (3 days from now)
             const deadline = new Date();
             deadline.setDate(deadline.getDate() + 3);
@@ -1143,7 +1201,9 @@ routes.post("/create-cod-order", isAuthenticated, async (req, res) => {
                 items: items.map(item => ({
                     productId: item.productId._id,
                     quantity: item.quantity,
-                    price: item.productId.price
+                    price: item.productId.price,
+                    customizeImage: item.customizeImage || [],
+                    customizeText: item.customizeText || [],
                 })),
                 totalAmount: subOrderTotal,
                 status: "processing",

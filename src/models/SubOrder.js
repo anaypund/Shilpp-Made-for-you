@@ -26,6 +26,14 @@ const subOrderSchema = new mongoose.Schema({
         type: Number,
         required: true,
       },
+      customizeImage: {
+          type: [String],
+          required: false,
+      },
+      customizeText: {
+          type: [String],
+          required: false,
+      },
     },
   ],
   totalAmount: {

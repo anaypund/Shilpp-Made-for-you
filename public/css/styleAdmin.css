@@ -240,6 +240,44 @@
     margin-top: 10px;
 }
 
+.preview-image{
+    margin-top: 10px;
+    max-width: 20%;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.cms-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 3rem;
+    border-bottom: 2px solid #000000;
+    padding: 1rem;
+}
+
+.cms-form-group label {
+    color: #333;
+    font-size: 1.2em;
+    font-weight: 500;
+}
+
+.cms-form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #2c3e50;
+    border-radius: 12px;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+    background: #f0f0f0;
+}
+
+.cms-form-group input:focus {
+    border-color: #e75480;
+    background: white;
+    outline: none;
+}
+
 .auth-button:hover {
     background: #d64d77;
     transform: translateY(-2px);

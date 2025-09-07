@@ -39,13 +39,36 @@
                 {{#if (eq product.inventory 0)}}
                     <button class="add-to-cart out-of-stock" disabled>Out of Stock</button>
                 {{else}}
-                    <form action="/cart" method="POST">
+                    <form action="/cart" method="POST" enctype="multipart/form-data">
                         <input type="hidden" name="id" value="{{product._id}}">
+
+                        {{#if product.isCustomizable}}
+                            <div class="customization-field" style="margin-bottom: 16px;">
+                                <label for="customizationInput" style="font-weight:600; margin-bottom: 20px;">{{product.customizationLabel}}</label><br>
+                                <div class="custom-input">
+                                    {{#if (eq product.customizationType "image")}}
+                                        <input type="file" id="customizationInput" name="customizationImage" accept="image/*" class="add-to-cart" multiple required style="display:none;">
+                                        <label for="customizationInput" class="add-to-cart">Select File(s)</label>
+                                        <span id="file-chosen" style="margin-left:10px;color:#555;font-size:0.98em;"></span>
+                                    {{else if (eq product.customizationType "text")}}
+                                        <input type="text" id="customizationInput" name="customizationText" required class="form-group input">
+                                    {{else if (eq product.customizationType "both")}}
+                                        <input type="file" id="customizationInput" name="customizationImage" accept="image/*" class="add-to-cart" multiple required style="display:none;">
+                                        <label for="customizationInput" class="add-to-cart">Select File(s)</label>
+                                        <span id="file-chosen" style="margin-left:10px;color:#555;font-size:0.98em;"></span>
+                                        <input type="text" id="customizationTextInput" name="customizationText" required class="form-group input" placeholder="Enter your text customization here" style="margin-top:10px;">
+                                    {{/if}}
+                                </div>
+                            </div>
+                        {{/if}}
+
                         <button class="add-to-cart" onclick="openPopup()" type="submit">Add to Cart</button>
                         <button id="share-btn" class="add-to-cart" style="margin-top: 20px;">Share</button>
                     </form>
                     <div class="inventory-status">In Stock: {{product.inventory}} items</div>
                 {{/if}}
+
+                
 
                 <div class="description" style="margin: 16px 0;">
                     <strong>Description:</strong><br>
@@ -244,6 +267,22 @@
         alert("Sharing not supported on this browser.");
     }
 });
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var input = document.getElementById('customizationInput');
+        var fileChosen = document.getElementById('file-chosen');
+        if(input && fileChosen) {
+            input.addEventListener('change', function(){
+                if(this.files.length > 0) {
+                    let names = Array.from(this.files).map(f => f.name).join(', ');
+                    fileChosen.textContent = names;
+                } else {
+                    fileChosen.textContent = '';
+                }
+            });
+        }
+    });
 
 
     document.addEventListener('DOMContentLoaded', function() {

@@ -1053,6 +1053,22 @@ p {
     min-width: 280px;
 }
 
+.custom-input{
+    margin-top: 1rem;
+}
+
+.custom-input input{
+    width: 95%;
+    margin-top: 2rem !important;
+  padding: 12px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 1em;
+  background: #fff;
+  margin-top: 4px;
+  transition: border 0.2s;
+}
+
 .product-side-column {
     display: flex;
     flex-direction: column;

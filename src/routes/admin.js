@@ -6,6 +6,17 @@ const User = require('../models/User');
 const Product = require('../models/products');
 const SubOrder = require('../models/SubOrder');
 const Seller = require('../models/Seller');
+const CMS = require('../models/CMS');
+const multer = require("multer");
+const { Storage } = require('@google-cloud/storage');
+const path = require('path');
+const sharp = require('sharp');
+const stream = require('stream');
+
+// Initialize Google Cloud Storage
+const gcstorage = new Storage();
+const bucketName = 'shilp-media';
+
 
 // Admin authentication middleware
 const isAdminAuthenticated = (req, res, next) => {
@@ -15,6 +26,67 @@ const isAdminAuthenticated = (req, res, next) => {
     res.redirect('/admin/login');
   }
 };
+
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: "./public/images/",
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname),
+    );
+  },
+});
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 30000000 }, // 30MB per file
+  fileFilter: function (req, file, cb) {
+    const filetypes = /jpeg|jpg|png|gif|webp|mp4|mov|avi|mkv/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb("Error: Images and Videos Only!");
+    }
+  },
+});
+
+
+// Update multer fields for seller registration file uploads
+const adminUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 30000000 },
+  fileFilter: function (req, file, cb) {
+    const filetypes = /jpeg|jpg|png|pdf/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb("Error: Images and PDFs Only!");
+    }
+  },
+})
+
+// Define the uploadBufferToGCS function
+async function uploadBufferToGCS(buffer, destination, mimetype) {
+  const bucket = gcstorage.bucket(bucketName);
+  const file = bucket.file(destination);
+  
+  await file.save(buffer, {
+    metadata: {
+      contentType: mimetype,
+      cacheControl: 'public, max-age=31536000',
+    },
+    validation: 'md5',
+  });
+
+  return `https://storage.googleapis.com/${bucketName}/${destination}`;
+}
+
+
 
 // Login routes
 router.get('/login', (req, res) => {
@@ -297,6 +369,77 @@ router.post('/orders/:orderId/shipping-status', isAdminAuthenticated, async (req
     res.json({ success: true, order, subOrders });
   } catch (error) {
     res.status(500).send('Error updating shipping status');
+  }
+});
+
+// CMS route
+router.get('/CMS', isAdminAuthenticated, async (req, res) => {
+  try {
+    const cmsData = await CMS.findOne();
+    res.render('admin/cms', { cmsData });
+  } catch (error) {
+    res.status(500).send('Error loading CMS data');
+  }
+});
+
+// CMS update route
+router.post('/CMS/update', isAdminAuthenticated, upload.fields([
+  { name: 'bannerImagePC', maxCount: 1 },
+  { name: 'bannerImageMobile', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const { bannerImagePCTag, bannerImageMobileTag } = req.body;
+
+    const bannerImagePCUrl = req.files['bannerImagePC']
+            ? await Promise.all(req.files['bannerImagePC'].map(async (file) => {
+                // Resize + compress to WebP
+                const webpBuffer = await sharp(file.buffer)
+                  .resize({ width: 800 }) // Resize width to 800px
+                  .webp({ quality: 60 }) // More aggressive compression
+                  .toBuffer();
+    
+                console.log(`Compressed image size: ${(webpBuffer.length / 1024).toFixed(2)} KB`);
+    
+                const gcsName = `cms/${file.fieldname}-${Date.now()}-${Math.round(Math.random()*1e9)}.webp`;
+                return await uploadBufferToGCS(webpBuffer, gcsName, 'image/webp');
+              }))
+            : [];
+
+    const bannerImageMobileUrl = req.files['bannerImageMobile']
+            ? await Promise.all(req.files['bannerImageMobile'].map(async (file) => {
+                // Resize + compress to WebP
+                const webpBuffer = await sharp(file.buffer)
+                  .resize({ width: 800 }) // Resize width to 800px
+                  .webp({ quality: 60 }) // More aggressive compression
+                  .toBuffer();
+    
+                console.log(`Compressed image size: ${(webpBuffer.length / 1024).toFixed(2)} KB`);
+    
+                const gcsName = `cms/${file.fieldname}-${Date.now()}-${Math.round(Math.random()*1e9)}.webp`;
+                return await uploadBufferToGCS(webpBuffer, gcsName, 'image/webp');
+              }))
+            : [];
+
+
+    await CMS.findOneAndUpdate({}, {
+      indexPage: {
+        bannerImage: {
+          pc: {
+            url: bannerImagePCUrl[0],
+            tag: bannerImagePCTag
+          },
+          mobile: {
+            url: bannerImageMobileUrl[0],
+            tag: bannerImageMobileTag
+          }
+        }
+      }
+    });
+
+    res.redirect('/admin/cms');
+  } catch (error) {
+    console.error('Error updating CMS data:', error);
+    res.status(500).send('Error updating CMS data');
   }
 });
 

@@ -9,47 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body class="admin-body">
-    <div class="admin-sidebar">
-        <div class="sidebar-header">
-            <h2>Shilpp Admin</h2>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="/admin/dashboard" class="nav-item">
-                <i class="fas fa-chart-line"></i>
-                Dashboard
-            </a>
-            <a href="/admin/orders" class="nav-item">
-                <i class="fas fa-shopping-cart"></i>
-                Orders
-            </a>
-            <a href="/admin/suborders" class="nav-item">
-                <i class="fas fa-boxes"></i>
-                SubOrders
-            </a>
-            <a href="/admin/sellers" class="nav-item">
-                <i class="fas fa-store"></i>
-                Sellers
-            </a>
-            <a href="/admin/products" class="nav-item">
-                <i class="fas fa-box"></i>
-                Products
-            </a>
-            <a href="/admin/customers" class="nav-item">
-                <i class="fas fa-users"></i>
-                Customers
-            </a>
-            <div class="sidebar-footer">
-                <a href="/admin/settings" class="nav-item active">
-                    <i class="fas fa-cog"></i>
-                    Settings
-                </a>
-                <a href="/admin/logout" class="nav-item">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Logout
-                </a>
-            </div>
-        </nav>
-    </div>
+    {{> admin/sidebar }}
 
     <div class="admin-main">
         <h2>Admin Settings</h2>
