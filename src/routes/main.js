@@ -813,7 +813,7 @@ routes.post("/create-order", async (req, res) => {
     const { currency, receipt } = req.body;
     const userId = req.session.userId;
     try {
-        console.log('Razorpay version:', Razorpay.version);
+        console.log('Razorpay version:', Razorpay.VERSION);
         const cartItems = await CartItem.find({ userId }).populate("productId");
         let shippingCharges = 100;
         let subTotal = 0;
@@ -834,15 +834,16 @@ routes.post("/create-order", async (req, res) => {
         console.log("Total amount (in INR):", total);
         try {
             const order = await razorpay.orders.create({
-                amount: total * 100,
+                amount: parseInt(total) * 100,
                 currency,
                 receipt,
-                payment_capture: "1",
+                payment_capture: 1,
             });
             console.log("Razorpay order created:", order);
 
             res.json(order);
         } catch (error) {
+            console.error("Error creating Razorpay order:", error);
             res.status(500).send({ error: error.message });
         }
     } catch (error) {
